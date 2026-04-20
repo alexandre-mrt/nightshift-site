@@ -75,30 +75,6 @@ function Badge({
   );
 }
 
-function StatusBadge({
-  status,
-}: {
-  status: "implemented" | "in-progress" | "proposed";
-}) {
-  const styles = {
-    implemented: "bg-emerald-500/20 text-emerald-400 ring-emerald-500/30",
-    "in-progress": "bg-amber-500/20 text-amber-400 ring-amber-500/30",
-    proposed: "bg-zinc-500/20 text-zinc-400 ring-zinc-500/30",
-  };
-  const labels = {
-    implemented: "Implemented in v5",
-    "in-progress": "In Progress",
-    proposed: "Proposed",
-  };
-  return (
-    <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${styles[status]}`}
-    >
-      {labels[status]}
-    </span>
-  );
-}
-
 /* ------------------------------------------------------------------ */
 /*  Agent profile data                                                 */
 /* ------------------------------------------------------------------ */
@@ -452,7 +428,6 @@ const part1Items = [
 ];
 
 const part2Items = [
-  { id: "whats-new-v5", label: "What's New in v5" },
   { id: "current-state", label: "Where Night Shift Stands Today" },
   { id: "priority-matrix", label: "Priority Matrix" },
   { id: "proposals-context", label: "Context Management" },
@@ -471,7 +446,6 @@ interface Proposal {
   title: string;
   impact: "high" | "medium" | "low";
   effort: "high" | "medium" | "low";
-  status: "implemented" | "in-progress" | "proposed";
   category: string;
   description: string;
   howItWorks: string;
@@ -484,208 +458,193 @@ const proposals: Proposal[] = [
     title: "Adopt Model Tiering",
     impact: "high",
     effort: "low",
-    status: "implemented",
     category: "orchestration",
     description:
-      "Use different models per agent role: Opus for orchestrator/planner/critic, Sonnet for implementation and testing, Haiku for focused fixes and research.",
+      "Use different models per agent role: Opus for orchestrator/planner, Sonnet for implementation and QA, Haiku for focused tasks like testing and fixing.",
     howItWorks:
-      "V5 routes tasks to models based on role: orchestrator and critic on Opus, night-coder and night-tester on Sonnet, night-fixer (Tier 1) and Explore on Haiku. Auto-upgrade: if Sonnet fails 2x on the same task, retry with Opus. UI tasks use Opus 4.7 for design quality.",
-    currentState: "Fully implemented in v5 with 8-role model matrix and auto-upgrade rules.",
+      "Route tasks to models based on complexity. The plan-and-execute pattern achieves 83% cost reduction in production systems. Expected benefit: 50-70% cost reduction with minimal quality impact.",
+    currentState: "Night Shift currently uses a single model for all agents.",
   },
   {
     id: "doom-loop",
     title: "Doom-Loop Detection",
     impact: "high",
     effort: "low",
-    status: "implemented",
     category: "observability",
     description:
-      "Detect repeated patterns across iterations using 6 signals: same file edited 3+ times, same error hash 3+ times, same test failing 3+ times, no completions for 5+ iterations, convergence rate < 0.1, and diff hash oscillation (A-B-A).",
+      "Detect repeated tool call patterns across iterations to avoid infinite loops. Track same file edits, same test failures, same error messages.",
     howItWorks:
-      "V5 checks all 6 signals every iteration. Response is graduated: same file 3x triggers revert to checkpoint with different approach; same error 3x triggers model tier upgrade; diff hash reappears triggers fundamentally different architecture; same test 3x triggers re-examination of the test itself; no progress 5x triggers forced mid-course re-evaluation.",
+      "If a doom-loop is detected: escalate to a different agent, try an alternative approach, or halt with a detailed diagnostic. Log convergence rate and repeated action ratio.",
     currentState:
-      "Fully implemented in v5 with 6-signal detection and graduated response strategies.",
+      "Ralph-loop has iteration limits but may not detect circular behavior patterns.",
   },
   {
     id: "rhetorical-questions",
     title: "Rhetorical Question Review Strategy",
     impact: "medium",
     effort: "low",
-    status: "implemented",
     category: "quality",
     description:
-      'Reviewer agents use guided reasoning questions instead of direct instructions. E.g., "What happens when the database connection drops mid-transaction?"',
+      'Train reviewer agents to ask guided reasoning questions instead of direct instructions. E.g., "What happens when the database connection drops mid-transaction?"',
     howItWorks:
-      "V5 audit wrapper explicitly instructs all 6 review personas to use rhetorical questions over directives. This activates broader code examination versus mechanical patching of specific lines.",
+      "The GAN-inspired pattern research shows rhetorical questions activate broader code examination versus mechanical patching of specific lines.",
     currentState:
-      "Implemented in v5 via the audit wrapper agent instructions.",
+      'Reviewers likely provide direct instructions ("fix line 45").',
   },
   {
     id: "cost-tracking",
     title: "Cost Tracking & Budget Enforcement",
     impact: "medium",
     effort: "low",
-    status: "implemented",
     category: "safety",
     description:
-      "Track token usage per agent, per iteration, per phase. Budget initialized in state with alert and halt thresholds.",
+      "Track token usage per agent, per iteration, per phase. Set cost ceilings per night shift run with alerts and graceful shutdown.",
     howItWorks:
-      "V5 initializes budget in STATE.json at pre-flight. Alert triggers at 70% (switches non-critical agents to Haiku). Hard halt at 100% with graceful shutdown and status report. Post-mortem agent logs cost metrics to ~/.claude/metrics/sessions.jsonl.",
+      "Alert at 70% budget consumption. Force graceful shutdown with status report at ceiling. Log cost/quality ratios to optimize model selection over time.",
     currentState:
-      "Fully implemented in v5 with 70% alert and 100% halt thresholds.",
+      "Iteration limits exist, but per-run cost tracking may be limited.",
   },
   {
     id: "post-mortem",
     title: "Post-Mortem Analysis Agent",
     impact: "medium",
     effort: "low",
-    status: "implemented",
     category: "observability",
     description:
-      "After each night shift, a dedicated Haiku agent reviews STATE.json, ERRORS.json, PROBLEMS.md, and git log to produce a structured post-mortem.",
+      "After each night shift, a dedicated agent reviews all iterations for patterns, identifies recurring failure modes, and suggests improvements.",
     howItWorks:
-      "V5 Step 4g spawns a Haiku agent that reads all state files and produces NIGHT_SHIFT_POSTMORTEM.md with metrics, patterns, and lessons. Appends to ~/.claude/orchestration/playbooks/. LEARNINGS.md is updated with 3-5 reusable lessons per session.",
+      "Reviews iteration count to convergence, recurring bug types, and produces metrics (convergence rate, cost per task, review pass rate). Updates a cumulative LESSONS_LEARNED.md.",
     currentState:
-      "Fully implemented in v5 with structured post-mortem and metrics logging.",
+      "Debriefs exist but may not systematically feed back into the system.",
   },
   {
     id: "review-personas",
     title: "Implement Review Personas",
     impact: "high",
     effort: "medium",
-    status: "implemented",
     category: "quality",
     description:
-      "Six specialized review personas in the stability gate audit wrapper: Architect, Domain Expert, Code Expert, Performance Expert, Security Expert, and Human Advocate.",
+      "Expand to six specialized review personas: Architect, Domain Expert, Code Expert, Performance Expert, Security Expert, and Human Advocate.",
     howItWorks:
-      "V5 Step 3 spawns a single audit wrapper agent that internally creates 6 fresh persona teams per loop. Cross-validation: Architect+Code on boundaries, Security+Performance on rate limiting, Domain+Human on error messages. Requires 3 consecutive clean passes (0 critical/high), safety cap of 10 loops.",
+      "Each persona reviews against specific documentation sections with a distinct system prompt. More nuanced than a single 'code reviewer' agent.",
     currentState:
-      "Fully implemented in v5 via the stability gate audit wrapper agent.",
+      "Night Shift has night-qa, code-reviewer, and security-reviewer agents.",
   },
   {
     id: "ground-truth",
     title: "Phase-0 Ground Truth Document",
     impact: "high",
     effort: "medium",
-    status: "implemented",
     category: "context",
     description:
-      "Before any code generation, create three immutable ground truth documents: GROUND_TRUTH_BRAINSTORM.md, GROUND_TRUTH_HEALTH.md, and GROUND_TRUTH_DOCS.md.",
+      "Before any generation begins, establish three read-only assessment documents: brainstorm.md, health-audit.md, and doc-audit.md.",
     howItWorks:
-      "V5 Step 0d creates all three documents. Brainstorm explores approaches with pros/cons. Health audits the codebase (structure, coverage, debt). Docs audits types, interfaces, and patterns. All agents validate against these, never against the original request. Documents are IMMUTABLE after creation.",
+      "All subsequent agents validate against these documents, not the original user request. Ensures grounded execution with shared context about the codebase state.",
     currentState:
-      "Fully implemented in v5 Step 0d with immutability enforcement.",
+      "Night Shift has enriched specs and state files but no formal pre-generation audit.",
   },
   {
     id: "context-compaction",
     title: "Progressive Context Compaction",
     impact: "medium",
     effort: "medium",
-    status: "in-progress",
     category: "context",
     description:
       "Five-stage progressive compaction from full context to emergency summarization, plus a cumulative DECISIONS.md file across iterations.",
     howItWorks:
-      "Stages: full context (0-50%), summarize outputs (50-70%), compress history (70-80%), aggressive summarization (80-90%), emergency compaction (90%+). V5 partially addresses this via JSON auto-trimming (last 5 log entries only), selective ERRORS.json reads, and mandatory context budget rules (exit iteration early if context is heavy).",
+      "Stages: full context (0-50%), summarize outputs (50-70%), compress history (70-80%), aggressive summarization (80-90%), emergency compaction (90%+). DECISIONS.md prevents repeating mistakes.",
     currentState:
-      "Partially addressed in v5 via auto-trimming and context budget rules, but full 5-stage compaction is not yet implemented.",
+      "Fresh context per iteration (Ralph loop) works well but loses inter-iteration learning.",
   },
   {
     id: "feedback-bus",
     title: "Structured Feedback Bus",
     impact: "medium",
     effort: "medium",
-    status: "proposed",
     category: "orchestration",
     description:
       "A structured feedback.md file with Active Feedback, Resolved Feedback, and Signals sections following the GAN-inspired pattern.",
     howItWorks:
       "Issues are filed by reviewers, assigned to agents, tracked through resolution with commit references. Signal protocol tracks phase progression (PLAN_APPROVED, QA_CYCLE: 2/3).",
     currentState:
-      "V5 uses STATE.json and ERRORS.json for inter-iteration communication, but lacks a dedicated feedback file for reviewer-to-coder issue tracking.",
+      "State file serves as primary communication but lacks structured issue tracking.",
   },
   {
     id: "test-first",
     title: "Test-First Agent Flow",
     impact: "high",
     effort: "medium",
-    status: "implemented",
     category: "quality",
     description:
-      "Night-tester (Sonnet) creates comprehensive tests before implementation begins. Tests define expected behavior as executable specifications.",
+      "Night-tester creates extensive tests before implementation begins. Tests define expected behavior as executable specifications.",
     howItWorks:
-      "V5 Step 1f generates test specs for each task. Step 9 verifies tests exist before execution. Per-task flow: check tests exist, confirm they fail (red), spawn night-coder to implement until tests pass (green), run full validation. This gives every iteration an objective convergence criterion.",
+      "Night-coder implements until tests pass. Night-qa validates test quality (no placeholder assertions). Provides objective convergence criteria for the Ralph loop.",
     currentState:
-      "Fully implemented in v5 with mandatory red-before-green enforcement.",
+      "Tests may be written alongside or after implementation.",
   },
   {
     id: "safety-tiers",
     title: "Safety Tiers for Unattended Operation",
     impact: "high",
     effort: "medium",
-    status: "implemented",
     category: "safety",
     description:
-      "Schema-level tool filtering per agent role: reviewers never write, QA never edits, research never executes. Based on the OpenDev defense-in-depth model.",
+      "Three safety tiers (Green/Yellow/Red) with schema-level tool filtering per agent based on the OpenDev defense-in-depth model.",
     howItWorks:
-      "V5 implements safety tiers via allowedTools per agent (references/safety-tiers.md). Night-qa never sees write tools. Code-reviewer and security-reviewer are read-only. Explore agents cannot execute commands. This is enforced at the schema level, not by prompt instructions.",
+      "Green: auto-approve reads/tests. Yellow: auto-approve writes with logging. Red: block network/system commands. Schema-level filtering: night-qa never sees write tools.",
     currentState:
-      "Fully implemented in v5 with schema-level tool filtering per agent role.",
+      "Permission management exists but may not be tiered by risk level.",
   },
   {
     id: "dual-validation",
     title: "Dual-Agent Cross-Validation",
     impact: "high",
     effort: "medium",
-    status: "proposed",
     category: "quality",
     description:
       "For critical changes, spawn a parallel implementation using a different model/approach and compare divergences.",
     howItWorks:
       "Night-Coder A and Night-Coder B implement the same spec independently. A diff-comparison agent identifies divergence points as likely bug candidates or specification ambiguities.",
     currentState:
-      "V5 uses adversarial critic review (GAN pattern) and 6-persona audit, but does not yet spawn parallel implementations for comparison.",
+      "QA cycles validate output but no parallel implementation comparison.",
   },
   {
     id: "shared-scratchpad",
     title: "Shared Scratchpad for Agent Coordination",
     impact: "high",
     effort: "high",
-    status: "proposed",
     category: "orchestration",
     description:
       "A real-time shared scratchpad with optimistic locking, inspired by Agent Teams' mailbox system.",
     howItWorks:
       "Agents read latest state before starting work. Orchestrator checks for conflicts before merging. Structured sections: active findings, resolved items, blocked tasks, coordination notes.",
     currentState:
-      "V5 uses STATE.json as the shared coordination point, but agents in worktrees cannot see each other's in-progress changes in real time.",
+      "Agents communicate through state files, but real-time coordination is limited.",
   },
   {
     id: "ephemeral-envs",
     title: "Ephemeral Environment Testing",
     impact: "medium",
     effort: "high",
-    status: "proposed",
     category: "quality",
     description:
       "Spin up fresh containers per test cycle to catch missing dependencies and environment-specific assumptions.",
     howItWorks:
       "Install dependencies from scratch, run full test suite in clean environment, validate that the PR would pass CI. Uses Container Use, Docker Sandbox, or E2B.",
     currentState:
-      "V5 testing happens within worktrees using the local environment. No containerized isolation yet.",
+      "Testing happens within the worktree using the local environment.",
   },
   {
     id: "a2a-discovery",
     title: "A2A-Style Agent Discovery",
     impact: "low",
     effort: "high",
-    status: "proposed",
     category: "orchestration",
     description:
       "Lightweight Agent Cards inspired by A2A protocol so the orchestrator can dynamically discover and spawn agents based on task requirements.",
     howItWorks:
       "Each agent publishes capabilities in a structured format. Orchestrator matches task requirements to agent capabilities. Enables future extensibility without modifying the orchestrator.",
-    currentState: "V5 agent roles are defined in the skill spec and skill-forge generates domain-specific skills, but dynamic agent discovery is not yet implemented.",
+    currentState: "Agent roles are hardcoded in skill definitions.",
   },
 ];
 
@@ -694,19 +653,12 @@ const proposals: Proposal[] = [
 /* ------------------------------------------------------------------ */
 
 function ProposalCard({ proposal }: { proposal: Proposal }) {
-  const borderColor =
-    proposal.status === "implemented"
-      ? "border-emerald-500/30"
-      : proposal.status === "in-progress"
-        ? "border-amber-500/30"
-        : "border-zinc-800";
   return (
-    <div className={`rounded-lg border ${borderColor} bg-zinc-900/50 p-5`}>
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-5">
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <h4 className="text-sm font-semibold text-zinc-100">
           {proposal.title}
         </h4>
-        <StatusBadge status={proposal.status} />
         <Badge level={proposal.impact} label={`Impact: ${proposal.impact}`} />
         <Badge level={proposal.effort} label={`Effort: ${proposal.effort}`} />
       </div>
@@ -914,8 +866,7 @@ export default function ResearchPage() {
         </SectionHeading>
         <Prose>
           <p>
-            Side-by-side comparison of all eight agents plus Night Shift v5
-            across key dimensions.
+            Side-by-side comparison of all eight agents across key dimensions.
           </p>
         </Prose>
         <div className="mt-6 overflow-x-auto">
@@ -946,30 +897,6 @@ export default function ResearchPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800">
-              {/* Night Shift v5 — highlighted row */}
-              <tr className="bg-purple-500/5 border-l-2 border-purple-500">
-                <td className="whitespace-nowrap px-3 py-2.5 font-medium text-purple-300">
-                  Night Shift v5
-                </td>
-                <td className="px-3 py-2.5 text-zinc-400">
-                  Hierarchical + plan-and-execute + adversarial audit
-                </td>
-                <td className="px-3 py-2.5 text-zinc-400">
-                  Git worktrees + safety tiers
-                </td>
-                <td className="px-3 py-2.5 text-zinc-400">
-                  Fresh-context loop + JSON state + KV-cache optimization
-                </td>
-                <td className="px-3 py-2.5 text-zinc-400">
-                  Test-first + 6-persona audit + 3-tier escalation
-                </td>
-                <td className="px-3 py-2.5 text-zinc-400">
-                  <span className="text-zinc-600">No</span>
-                </td>
-                <td className="whitespace-nowrap px-3 py-2.5 text-zinc-400">
-                  N/A
-                </td>
-              </tr>
               {agents.map((a) => (
                 <tr key={a.name} className="hover:bg-zinc-900/50">
                   <td className="whitespace-nowrap px-3 py-2.5 font-medium text-zinc-200">
@@ -1051,10 +978,7 @@ export default function ResearchPage() {
               Requires a capable model for decomposition.{" "}
               <strong className="text-zinc-300">
                 This is Night Shift&apos;s core pattern.
-              </strong>{" "}
-              V5 adds pipelining (overlap current iteration with next),
-              early abort on critical failures, and a wrapped audit gate
-              with 6 review personas.
+              </strong>
             </p>
             <MermaidDiagram chart={hierarchicalChart} />
           </div>
@@ -1068,13 +992,8 @@ export default function ResearchPage() {
               An expensive reasoning model creates a detailed plan; cheaper
               models execute each step. Achieves{" "}
               <strong className="text-zinc-300">83% cost reduction</strong>{" "}
-              versus running everything on the strongest model.{" "}
-              <strong className="text-zinc-300">
-                Night Shift v5 implements this
-              </strong>{" "}
-              with an 8-role model matrix: Opus for orchestrator/critic/skill-forge,
-              Sonnet for night-coder/night-tester, Haiku for fixer (Tier 1)
-              and research. Auto-upgrade on repeated failures.
+              versus running everything on the strongest model. Use model
+              tiering: planner on Opus, executors on Haiku (20x cheaper).
             </p>
             <MermaidDiagram chart={planAndExecuteChart} />
           </div>
@@ -1088,13 +1007,7 @@ export default function ResearchPage() {
               Multiple agents work on the same problem independently, then
               results are compared or debated. Used for debugging (competing
               hypotheses), code review (multiple perspectives), and research
-              (parallel exploration). Higher token cost but more robust results.{" "}
-              <strong className="text-zinc-300">
-                Night Shift v5 uses this pattern
-              </strong>{" "}
-              in the critic agent (GAN pattern: sees only spec + output,
-              never generator reasoning) and in 3-tier escalation Tier 2
-              (agent team with competing hypotheses).
+              (parallel exploration). Higher token cost but more robust results.
             </p>
           </div>
         </div>
@@ -1998,147 +1911,10 @@ export default function ResearchPage() {
           Part 2 &mdash; Improvement Proposals for Night Shift
         </h2>
         <p className="mt-1 text-sm text-zinc-400">
-          15 proposals derived from the research above. With v5, 12 of these are
-          now implemented. Remaining proposals are tracked below with color-coded
-          status badges.
+          15 concrete proposals derived from the research above, grouped by
+          category with impact/effort ratings and an actionable priority matrix.
         </p>
       </div>
-
-      {/* ============================================================ */}
-      {/*  What's New in v5                                             */}
-      {/* ============================================================ */}
-      <section id="whats-new-v5" className="mb-20 scroll-mt-24">
-        <SectionHeading id="whats-new-v5-heading">
-          What&apos;s New in v5
-        </SectionHeading>
-        <Prose>
-          <p>
-            Night Shift v5 is a major evolution that implements 12 of the 15
-            research-driven proposals from the original survey. Here are the key
-            additions over v3/v4:
-          </p>
-        </Prose>
-
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
-            <h4 className="mb-1 text-sm font-semibold text-emerald-400">
-              Test-First Flow
-            </h4>
-            <p className="text-xs text-zinc-400">
-              Tests are generated before implementation (red phase). Night-coder
-              implements until tests pass (green). Objective convergence
-              criterion for every iteration.
-            </p>
-          </div>
-          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
-            <h4 className="mb-1 text-sm font-semibold text-emerald-400">
-              Ground Truth Documents
-            </h4>
-            <p className="text-xs text-zinc-400">
-              Three immutable documents (Brainstorm, Health, Docs) created
-              before any code generation. All agents validate against these, not
-              the original request.
-            </p>
-          </div>
-          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
-            <h4 className="mb-1 text-sm font-semibold text-emerald-400">
-              Model Tiering
-            </h4>
-            <p className="text-xs text-zinc-400">
-              8-role model matrix: Opus for orchestrator/critic, Sonnet for
-              implementation, Haiku for fixes/research. Auto-upgrade on repeated
-              failures.
-            </p>
-          </div>
-          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
-            <h4 className="mb-1 text-sm font-semibold text-emerald-400">
-              Pipelining
-            </h4>
-            <p className="text-xs text-zinc-400">
-              Overlaps current iteration with next: pre-reads files, pre-computes
-              merge order, stores prefetch in STATE.json. Next iteration skips
-              exploration.
-            </p>
-          </div>
-          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
-            <h4 className="mb-1 text-sm font-semibold text-emerald-400">
-              3-Tier Escalation + Reflexion
-            </h4>
-            <p className="text-xs text-zinc-400">
-              Tier 1: Haiku fixer with self-critique and prompt variation. Tier
-              2: rollback + agent team debugging. Tier 3: mark blocked, log
-              trajectory, move on.
-            </p>
-          </div>
-          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
-            <h4 className="mb-1 text-sm font-semibold text-emerald-400">
-              6-Signal Doom-Loop Detection
-            </h4>
-            <p className="text-xs text-zinc-400">
-              Detects same-file edits, error hash repeats, test failures, stalls,
-              low convergence rate, and diff oscillation. Graduated response
-              per signal type.
-            </p>
-          </div>
-          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
-            <h4 className="mb-1 text-sm font-semibold text-emerald-400">
-              Cache-Optimized Prompts
-            </h4>
-            <p className="text-xs text-zinc-400">
-              Stable prefix / variable suffix structure maximizes KV-cache hit
-              rate across agents of the same type. Frozen prefix for system
-              instructions, append-only dynamic content.
-            </p>
-          </div>
-          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
-            <h4 className="mb-1 text-sm font-semibold text-emerald-400">
-              Audit Wrapper (6 Personas)
-            </h4>
-            <p className="text-xs text-zinc-400">
-              Single wrapper agent handles stability gate with 6 review
-              personas, cross-validation, 3 consecutive clean passes required.
-              Safety cap of 10 loops.
-            </p>
-          </div>
-          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
-            <h4 className="mb-1 text-sm font-semibold text-emerald-400">
-              Budget Enforcement
-            </h4>
-            <p className="text-xs text-zinc-400">
-              Budget initialized in STATE.json. Alert at 70% (switch to Haiku).
-              Hard halt at 100%. Metrics logged to sessions.jsonl after each run.
-            </p>
-          </div>
-          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
-            <h4 className="mb-1 text-sm font-semibold text-emerald-400">
-              Compact JSON State
-            </h4>
-            <p className="text-xs text-zinc-400">
-              Compact field names (t, s, p, grp) save ~25% tokens per read.
-              Auto-trimming keeps log to last 5 entries. Selective reads via jq.
-            </p>
-          </div>
-          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
-            <h4 className="mb-1 text-sm font-semibold text-emerald-400">
-              Skill-Forge Integration
-            </h4>
-            <p className="text-xs text-zinc-400">
-              Parallel domain skill creation during planning. Scans existing
-              skills, generates missing ones, injects into all agent prompts.
-            </p>
-          </div>
-          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
-            <h4 className="mb-1 text-sm font-semibold text-emerald-400">
-              Early Abort
-            </h4>
-            <p className="text-xs text-zinc-400">
-              On critical failure (build broken, type cascade, merge conflict):
-              stop merging, fix first, re-evaluate remaining results, retry
-              aborted agents next iteration.
-            </p>
-          </div>
-        </div>
-      </section>
 
       {/* ============================================================ */}
       {/*  Where Night Shift Stands Today                               */}
@@ -2149,136 +1925,86 @@ export default function ResearchPage() {
         </SectionHeading>
         <Prose>
           <p>
-            Night Shift v5 implements the vast majority of patterns identified
-            in the research. 12 of 15 proposals are now in production. Here is
-            the current breakdown:
+            Night Shift already implements several patterns identified in the
+            research. Here is what exists versus what is proposed:
           </p>
         </Prose>
-        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
             <h4 className="mb-3 text-sm font-semibold text-emerald-400">
-              Core (since v1)
+              Already Implemented
             </h4>
             <ul className="space-y-1.5 text-xs text-zinc-400">
               <li>
                 <span className="mr-1 text-emerald-400">&#10003;</span>{" "}
-                Hierarchical orchestration
+                Hierarchical orchestration (orchestrator-worker)
               </li>
               <li>
                 <span className="mr-1 text-emerald-400">&#10003;</span>{" "}
-                Ralph-loop fresh-context
+                Ralph-loop fresh-context pattern
               </li>
               <li>
                 <span className="mr-1 text-emerald-400">&#10003;</span>{" "}
-                Git worktree isolation
+                Git worktree isolation per agent
               </li>
               <li>
                 <span className="mr-1 text-emerald-400">&#10003;</span>{" "}
-                State files on disk
+                State files on disk for persistence
               </li>
               <li>
                 <span className="mr-1 text-emerald-400">&#10003;</span>{" "}
-                Multi-agent QA
+                Multi-agent QA (night-qa, code-reviewer, security-reviewer)
               </li>
               <li>
                 <span className="mr-1 text-emerald-400">&#10003;</span>{" "}
-                Enriched spec (Phase 0)
-              </li>
-            </ul>
-          </div>
-          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
-            <h4 className="mb-3 text-sm font-semibold text-emerald-400">
-              New in v5 (12 proposals)
-            </h4>
-            <ul className="space-y-1.5 text-xs text-zinc-400">
-              <li>
-                <span className="mr-1 text-emerald-400">&#10003;</span>{" "}
-                Test-first flow (red-green)
+                Iteration limits and debrief reports
               </li>
               <li>
                 <span className="mr-1 text-emerald-400">&#10003;</span>{" "}
-                Ground truth documents
+                V3 Agent Teams for audit phase
               </li>
               <li>
                 <span className="mr-1 text-emerald-400">&#10003;</span>{" "}
-                Model tiering (8 roles)
-              </li>
-              <li>
-                <span className="mr-1 text-emerald-400">&#10003;</span>{" "}
-                Pipelining + early abort
-              </li>
-              <li>
-                <span className="mr-1 text-emerald-400">&#10003;</span>{" "}
-                3-tier escalation + Reflexion
-              </li>
-              <li>
-                <span className="mr-1 text-emerald-400">&#10003;</span>{" "}
-                6-signal doom-loop detection
-              </li>
-              <li>
-                <span className="mr-1 text-emerald-400">&#10003;</span>{" "}
-                Cache-optimized prompts
-              </li>
-              <li>
-                <span className="mr-1 text-emerald-400">&#10003;</span>{" "}
-                Audit wrapper (6 personas)
-              </li>
-              <li>
-                <span className="mr-1 text-emerald-400">&#10003;</span>{" "}
-                Budget enforcement (70%/100%)
-              </li>
-              <li>
-                <span className="mr-1 text-emerald-400">&#10003;</span>{" "}
-                Safety tiers (schema-level)
-              </li>
-              <li>
-                <span className="mr-1 text-emerald-400">&#10003;</span>{" "}
-                Skill-forge integration
-              </li>
-              <li>
-                <span className="mr-1 text-emerald-400">&#10003;</span>{" "}
-                Post-mortem agent
+                Enriched spec generation (Phase 0)
               </li>
             </ul>
           </div>
           <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 p-4">
             <h4 className="mb-3 text-sm font-semibold text-blue-400">
-              Still Proposed (3 remaining)
+              Proposed Improvements
             </h4>
             <ul className="space-y-1.5 text-xs text-zinc-400">
               <li>
-                <span className="mr-1 text-blue-400">&#9679;</span>{" "}
-                Dual-agent cross-validation
+                <span className="mr-1 text-blue-400">&#9679;</span> Model
+                tiering (different models per agent role)
+              </li>
+              <li>
+                <span className="mr-1 text-blue-400">&#9679;</span> Expanded
+                review personas (6 specialties)
               </li>
               <li>
                 <span className="mr-1 text-blue-400">&#9679;</span>{" "}
-                Shared scratchpad (real-time)
+                Doom-loop detection and pattern analysis
               </li>
               <li>
                 <span className="mr-1 text-blue-400">&#9679;</span>{" "}
-                A2A-style agent discovery
-              </li>
-            </ul>
-            <h4 className="mb-2 mt-4 text-sm font-semibold text-amber-400">
-              In Progress (1)
-            </h4>
-            <ul className="space-y-1.5 text-xs text-zinc-400">
-              <li>
-                <span className="mr-1 text-amber-400">&#9679;</span>{" "}
-                Progressive context compaction
-              </li>
-            </ul>
-            <h4 className="mb-2 mt-4 text-sm font-semibold text-zinc-500">
-              Future Ideas
-            </h4>
-            <ul className="space-y-1.5 text-xs text-zinc-500">
-              <li>
-                <span className="mr-1">&#9679;</span>{" "}
-                Ephemeral env testing
+                Test-first agent flow
               </li>
               <li>
-                <span className="mr-1">&#9679;</span>{" "}
-                Structured feedback bus
+                <span className="mr-1 text-blue-400">&#9679;</span>{" "}
+                Phase-0 ground truth documents
+              </li>
+              <li>
+                <span className="mr-1 text-blue-400">&#9679;</span> Safety
+                tiers with schema-level tool filtering
+              </li>
+              <li>
+                <span className="mr-1 text-blue-400">&#9679;</span> Cost
+                tracking and budget enforcement
+              </li>
+              <li>
+                <span className="mr-1 text-blue-400">&#9679;</span>{" "}
+                Post-mortem analysis agent with LESSONS_LEARNED.md
               </li>
             </ul>
           </div>
@@ -2294,9 +2020,8 @@ export default function ResearchPage() {
         </SectionHeading>
         <Prose>
           <p>
-            All 15 proposals mapped on an impact vs. effort quadrant. Most
-            items from Quick Wins and Do Next are now implemented in v5.
-            Remaining proposals are marked below.
+            All 15 proposals mapped on an impact vs. effort quadrant. Quick Wins
+            (high impact, low effort) should be implemented first.
           </p>
         </Prose>
         <MermaidDiagram className="my-6" chart={priorityMatrixChart} />
@@ -2305,90 +2030,45 @@ export default function ResearchPage() {
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
             <h4 className="mb-2 text-sm font-semibold text-emerald-400">
-              Quick Wins &mdash; All Implemented
+              Quick Wins (High Impact, Low Effort)
             </h4>
             <ul className="space-y-1 text-xs text-zinc-400">
-              <li>
-                <span className="mr-1 text-emerald-400">&#10003;</span> Model
-                Tiering
-              </li>
-              <li>
-                <span className="mr-1 text-emerald-400">&#10003;</span>{" "}
-                Doom-Loop Detection
-              </li>
+              <li>Model Tiering</li>
+              <li>Doom-Loop Detection</li>
             </ul>
           </div>
-          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
-            <h4 className="mb-2 text-sm font-semibold text-emerald-400">
-              Do Next &mdash; 4/6 Implemented
+          <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 p-4">
+            <h4 className="mb-2 text-sm font-semibold text-blue-400">
+              Do Next (High Impact, Medium-High Effort)
             </h4>
             <ul className="space-y-1 text-xs text-zinc-400">
-              <li>
-                <span className="mr-1 text-emerald-400">&#10003;</span> Review
-                Personas
-              </li>
-              <li>
-                <span className="mr-1 text-emerald-400">&#10003;</span> Ground
-                Truth Document
-              </li>
-              <li>
-                <span className="mr-1 text-emerald-400">&#10003;</span>{" "}
-                Test-First Flow
-              </li>
-              <li>
-                <span className="mr-1 text-emerald-400">&#10003;</span> Safety
-                Tiers
-              </li>
-              <li>
-                <span className="mr-1 text-blue-400">&#9679;</span>{" "}
-                Dual-Agent Cross-Validation
-              </li>
-              <li>
-                <span className="mr-1 text-blue-400">&#9679;</span> Shared
-                Scratchpad
-              </li>
+              <li>Review Personas</li>
+              <li>Ground Truth Document</li>
+              <li>Test-First Flow</li>
+              <li>Safety Tiers</li>
+              <li>Dual-Agent Cross-Validation</li>
+              <li>Shared Scratchpad</li>
             </ul>
           </div>
-          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
-            <h4 className="mb-2 text-sm font-semibold text-emerald-400">
-              Fill Backlog &mdash; 4/5 Implemented
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
+            <h4 className="mb-2 text-sm font-semibold text-amber-400">
+              Fill Backlog (Medium Impact, Low-Medium Effort)
             </h4>
             <ul className="space-y-1 text-xs text-zinc-400">
-              <li>
-                <span className="mr-1 text-emerald-400">&#10003;</span>{" "}
-                Rhetorical Question Review
-              </li>
-              <li>
-                <span className="mr-1 text-emerald-400">&#10003;</span> Cost
-                Tracking &amp; Budget
-              </li>
-              <li>
-                <span className="mr-1 text-emerald-400">&#10003;</span>{" "}
-                Post-Mortem Analysis Agent
-              </li>
-              <li>
-                <span className="mr-1 text-amber-400">&#9679;</span>{" "}
-                Progressive Context Compaction
-              </li>
-              <li>
-                <span className="mr-1 text-blue-400">&#9679;</span> Structured
-                Feedback Bus
-              </li>
+              <li>Rhetorical Question Review Strategy</li>
+              <li>Cost Tracking &amp; Budget Enforcement</li>
+              <li>Post-Mortem Analysis Agent</li>
+              <li>Progressive Context Compaction</li>
+              <li>Structured Feedback Bus</li>
             </ul>
           </div>
           <div className="rounded-lg border border-zinc-700 bg-zinc-900/50 p-4">
             <h4 className="mb-2 text-sm font-semibold text-zinc-400">
-              Consider Later (Still Proposed)
+              Consider Later (Lower Priority)
             </h4>
             <ul className="space-y-1 text-xs text-zinc-500">
-              <li>
-                <span className="mr-1 text-blue-400">&#9679;</span> Ephemeral
-                Environment Testing
-              </li>
-              <li>
-                <span className="mr-1 text-blue-400">&#9679;</span> A2A-Style
-                Agent Discovery
-              </li>
+              <li>Ephemeral Environment Testing</li>
+              <li>A2A-Style Agent Discovery</li>
             </ul>
           </div>
         </div>

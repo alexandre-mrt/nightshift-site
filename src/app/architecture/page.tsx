@@ -4,332 +4,390 @@ import MermaidDiagram from "@/components/MermaidDiagram";
 export const metadata: Metadata = {
   title: "Architecture | NightShift Docs",
   description:
-    "System architecture diagrams and component breakdown for NightShift — autonomous overnight development with Claude Code.",
+    "V5 system architecture: ralph-loop, ground truth, test-first, model tiering, pipelining, audit wrapper, GAN-QA, doom-loop detection, cost tracking.",
 };
 
 const tocItems = [
   { id: "system-overview", label: "System Overview" },
-  { id: "ralph-loop", label: "Ralph-Loop Iteration Cycle" },
-  { id: "agent-hierarchy", label: "Agent Hierarchy" },
-  { id: "worktree-isolation", label: "Worktree Isolation Model" },
-  { id: "gan-qa", label: "GAN-Inspired QA Cycle" },
-  { id: "state-management", label: "State Management Flow" },
-  { id: "v3-agent-teams", label: "V3 Agent Teams Architecture" },
-  { id: "audit-loop", label: "Audit Loop Cycle" },
+  { id: "iteration-flow", label: "19-Step Iteration Flow" },
+  { id: "agent-roster", label: "Agent Roster & Model Tiering" },
+  { id: "error-escalation", label: "3-Tier Error Escalation" },
+  { id: "state-management", label: "State Management" },
+  { id: "audit-wrapper", label: "Audit Wrapper (6 Personas)" },
+  { id: "gan-qa", label: "GAN-QA Pattern" },
+  { id: "cache-optimization", label: "Cache Optimization" },
 ];
 
 /* ------------------------------------------------------------------ */
-/*  Mermaid chart definitions                                         */
+/*  Mermaid chart definitions — v5                                     */
 /* ------------------------------------------------------------------ */
 
 const systemOverviewChart = `graph TD
-    User["User writes spec & sleeps"]
-    Spec["Spec file (.md)"]
-    Runner["night-shift.sh launcher"]
-    RalphLoop["Ralph-Loop (stop hook)"]
-    Orchestrator["Orchestrator (fresh context)"]
-    State["NIGHT_SHIFT_STATE.md"]
-    Agents["Parallel Agents (worktrees)"]
-    Validate["Validate (build + test + lint)"]
-    PR["Review-ready PR"]
+    RL["Ralph-Loop<br/>(fresh context each iter)"]
+    State["STATE.json + ERRORS.json<br/>(persistent memory)"]
+    GT["Ground Truth Docs<br/>(immutable)"]
+    TF["Test-First Flow<br/>(red before green)"]
+    MT["Model Tiering<br/>(opus / sonnet / haiku)"]
+    PL["Pipelining<br/>(prefetch next iter)"]
+    EX["Execution<br/>(parallel agents + worktrees)"]
+    EA["Early Abort<br/>(on critical failure)"]
+    ESC["3-Tier Escalation<br/>(retry / rollback / blocked)"]
+    CR["Critic Agent<br/>(GAN pattern)"]
+    QA["QA Cycle<br/>(UI only, Playwright)"]
+    AW["Audit Wrapper<br/>(6 personas, 3 clean passes)"]
+    DL["Doom-Loop Detection<br/>(file edits, err hashes, diff hashes)"]
+    CT["Cost Tracking<br/>(budget alert 70%, halt 100%)"]
+    PR["Review-Ready PR"]
 
-    User --> Spec
-    Spec --> Runner
-    Runner --> RalphLoop
-    RalphLoop -->|"start iteration"| Orchestrator
-    Orchestrator -->|"read state"| State
-    Orchestrator -->|"spawn"| Agents
-    Agents -->|"merge back"| Validate
-    Validate -->|"pass"| State
-    State -->|"not done"| RalphLoop
-    State -->|"all done"| PR
-    Validate -->|"fail"| Fixer["night-fixer"]
-    Fixer -->|"retry"| Validate
+    RL -->|"read"| State
+    State --> GT
+    GT --> TF
+    TF --> MT
+    MT --> PL
+    PL --> EX
+    EX --> EA
+    EA --> ESC
+    ESC --> CR
+    CR --> QA
+    QA --> AW
+    AW --> DL
+    DL --> CT
+    CT -->|"all done"| PR
+    CT -->|"not done"| RL
 
-    style User fill:#1e3a5f,stroke:#3b82f6,color:#e4e4e7
-    style PR fill:#1a3a2a,stroke:#22c55e,color:#e4e4e7
-    style RalphLoop fill:#3b1f5e,stroke:#a855f7,color:#e4e4e7
+    style RL fill:#3b1f5e,stroke:#a855f7,color:#e4e4e7
     style State fill:#3b2f1a,stroke:#f59e0b,color:#e4e4e7
+    style GT fill:#1e3a5f,stroke:#3b82f6,color:#e4e4e7
+    style TF fill:#1a3a2a,stroke:#22c55e,color:#e4e4e7
+    style MT fill:#3b2f1a,stroke:#f59e0b,color:#e4e4e7
+    style EX fill:#1e3a5f,stroke:#3b82f6,color:#e4e4e7
+    style EA fill:#5f1e1e,stroke:#ef4444,color:#e4e4e7
+    style ESC fill:#5f1e1e,stroke:#ef4444,color:#e4e4e7
+    style CR fill:#3b1f5e,stroke:#a855f7,color:#e4e4e7
+    style QA fill:#1a3a2a,stroke:#22c55e,color:#e4e4e7
+    style AW fill:#3b1f5e,stroke:#a855f7,color:#e4e4e7
+    style DL fill:#5f1e1e,stroke:#ef4444,color:#e4e4e7
+    style CT fill:#3b2f1a,stroke:#f59e0b,color:#e4e4e7
+    style PR fill:#1a3a2a,stroke:#22c55e,color:#e4e4e7
 `;
 
-const ralphLoopChart = `graph TD
-    Start(["Iteration Start (fresh context)"])
-    ReadState["1. Read NIGHT_SHIFT_STATE.md"]
-    Collect["2. Collect all ready tasks\n(dependencies satisfied)"]
-    Spawn["3. Spawn agents in parallel\n(one per task, each in worktree)"]
-    Wait["4. Wait for all agents"]
-    Merge["5. Merge worktrees sequentially"]
-    Validate{"6. Validate\nbuild + test + lint"}
-    Fixer["7. Spawn night-fixer"]
-    FixRetry{"Fixed after\n3 attempts?"}
-    UpdateState["8. Update NIGHT_SHIFT_STATE.md"]
-    CheckDone{"9. All tasks\ncomplete?"}
-    Finalize["Create PR + summary"]
-    Exit(["Exit (hook re-feeds)"])
+const iterationFlowChart = `flowchart TD
+    S1["1. Read STATE.json<br/>(compact, max 50 lines)"]
+    S2["2. Read ERRORS.json<br/>(unresolved only)"]
+    S3["3. Read LEARNINGS.md<br/>+ TODO.md"]
+    S4["4. Read prefetch<br/>(from prev iteration)"]
+    S5["5. Run init.sh"]
+    S6["6. git log --oneline -5"]
+    S7{"7. Doom-loop<br/>detection"}
+    S8{"8. Idle<br/>detection"}
+    S9["9. Check tests exist<br/>(red before green)"]
+    S10["10. Spawn ALL ready tasks<br/>parallel (worktree)"]
+    S11["11. Pipelining: prefetch<br/>next while current runs"]
+    S12{"12. Collect results<br/>early abort on critical"}
+    S13["13. Merge worktrees<br/>+ validate"]
+    S14["14. 3-tier escalation<br/>on failures"]
+    S15["15. Critic agent<br/>(GAN pattern)"]
+    S16["16. QA cycle<br/>(UI tasks only)"]
+    S17["17. Update state<br/>+ cost tracking"]
+    S18["18. WIP commit"]
+    S19{"19. All done?"}
+    Gate["Stability Gate<br/>(audit wrapper)"]
+    Exit(["Exit iteration<br/>ralph-loop re-feeds"])
 
-    Start --> ReadState
-    ReadState --> Collect
-    Collect --> Spawn
-    Spawn --> Wait
-    Wait --> Merge
-    Merge --> Validate
-    Validate -->|"pass"| UpdateState
-    Validate -->|"fail"| Fixer
-    Fixer --> FixRetry
-    FixRetry -->|"yes"| UpdateState
-    FixRetry -->|"no (3x fail)"| UpdateState
-    UpdateState --> CheckDone
-    CheckDone -->|"yes"| Finalize
-    CheckDone -->|"no"| Exit
-    Exit -->|"ralph-loop stop hook"| Start
+    S1 --> S2 --> S3 --> S4 --> S5 --> S6
+    S6 --> S7
+    S7 -->|"doom detected"| S14
+    S7 -->|"clear"| S8
+    S8 -->|"idle detected"| S14
+    S8 -->|"active"| S9
+    S9 --> S10
+    S10 --> S11
+    S11 --> S12
+    S12 -->|"critical failure"| S14
+    S12 -->|"ok"| S13
+    S13 --> S14
+    S14 --> S15
+    S15 --> S16
+    S16 --> S17
+    S17 --> S18
+    S18 --> S19
+    S19 -->|"yes"| Gate
+    S19 -->|"no"| Exit
+    Exit -->|"ralph-loop"| S1
 
-    style Start fill:#3b1f5e,stroke:#a855f7,color:#e4e4e7
+    style S1 fill:#3b2f1a,stroke:#f59e0b,color:#e4e4e7
+    style S2 fill:#3b2f1a,stroke:#f59e0b,color:#e4e4e7
+    style S7 fill:#5f1e1e,stroke:#ef4444,color:#e4e4e7
+    style S8 fill:#5f1e1e,stroke:#ef4444,color:#e4e4e7
+    style S10 fill:#1e3a5f,stroke:#3b82f6,color:#e4e4e7
+    style S11 fill:#1e3a5f,stroke:#3b82f6,color:#e4e4e7
+    style S12 fill:#5f1e1e,stroke:#ef4444,color:#e4e4e7
+    style S15 fill:#3b1f5e,stroke:#a855f7,color:#e4e4e7
+    style S16 fill:#1a3a2a,stroke:#22c55e,color:#e4e4e7
+    style S19 fill:#3b1f5e,stroke:#a855f7,color:#e4e4e7
+    style Gate fill:#1a3a2a,stroke:#22c55e,color:#e4e4e7
     style Exit fill:#3b1f5e,stroke:#a855f7,color:#e4e4e7
-    style Validate fill:#1a3a2a,stroke:#22c55e,color:#e4e4e7
-    style Fixer fill:#5f1e1e,stroke:#ef4444,color:#e4e4e7
-    style Finalize fill:#1e3a5f,stroke:#3b82f6,color:#e4e4e7
 `;
 
-const agentHierarchyChart = `graph TD
-    Orch["Orchestrator\n(main context)"]
+const agentRosterChart = `graph LR
+    subgraph Coders["Code Agents (worktree)"]
+        NC["night-coder<br/>sonnet / opus 4.7 UI"]
+        NT["night-tester<br/>sonnet"]
+        NF["night-fixer<br/>haiku &rarr; sonnet &rarr; opus"]
+    end
 
-    NC["night-coder\n(worktree isolation)"]
-    NT["night-tester\n(worktree isolation)"]
-    NQ["night-qa\n(no isolation)"]
-    NF["night-fixer\n(worktree isolation)"]
-    CR["code-reviewer\n(no isolation)"]
-    SR["security-reviewer\n(no isolation)"]
-    EX["Explore\n(no isolation, read-only)"]
+    subgraph Reviewers["Review Agents (read-only)"]
+        CR["code-reviewer<br/>sonnet"]
+        SR["security-reviewer<br/>sonnet"]
+    end
 
-    Orch --> NC
-    Orch --> NT
-    Orch --> NQ
-    Orch --> NF
-    Orch --> CR
-    Orch --> SR
-    Orch --> EX
+    subgraph Quality["Quality Agents"]
+        NQ["night-qa<br/>opus 4.7"]
+    end
 
-    NC -.-|"implements features\n& components"| NCDesc[" "]
-    NT -.-|"writes comprehensive\ntest suites"| NTDesc[" "]
-    NQ -.-|"functional QA via\nPlaywright MCP"| NQDesc[" "]
-    NF -.-|"diagnoses & fixes\nbuild/test failures"| NFDesc[" "]
-    CR -.-|"code quality review\nbefore PR"| CRDesc[" "]
-    SR -.-|"security audit\nOWASP, auth, secrets"| SRDesc[" "]
-    EX -.-|"read-only research\n& codebase exploration"| EXDesc[" "]
+    subgraph Support["Support Agents"]
+        EXP["Explore<br/>haiku"]
+        SF["skill-forge<br/>opus"]
+    end
+
+    Orch["Orchestrator<br/>opus"] --> Coders
+    Orch --> Reviewers
+    Orch --> Quality
+    Orch --> Support
 
     style Orch fill:#3b1f5e,stroke:#a855f7,color:#e4e4e7
     style NC fill:#1e3a5f,stroke:#3b82f6,color:#e4e4e7
     style NT fill:#1e3a5f,stroke:#3b82f6,color:#e4e4e7
-    style NQ fill:#1a3a2a,stroke:#22c55e,color:#e4e4e7
     style NF fill:#5f1e1e,stroke:#ef4444,color:#e4e4e7
     style CR fill:#3b2f1a,stroke:#f59e0b,color:#e4e4e7
     style SR fill:#3b2f1a,stroke:#f59e0b,color:#e4e4e7
-    style EX fill:#27272a,stroke:#71717a,color:#e4e4e7
-    style NCDesc fill:none,stroke:none,color:transparent
-    style NTDesc fill:none,stroke:none,color:transparent
-    style NQDesc fill:none,stroke:none,color:transparent
-    style NFDesc fill:none,stroke:none,color:transparent
-    style CRDesc fill:none,stroke:none,color:transparent
-    style SRDesc fill:none,stroke:none,color:transparent
-    style EXDesc fill:none,stroke:none,color:transparent
+    style NQ fill:#1a3a2a,stroke:#22c55e,color:#e4e4e7
+    style EXP fill:#27272a,stroke:#71717a,color:#e4e4e7
+    style SF fill:#3b1f5e,stroke:#a855f7,color:#e4e4e7
+    style Coders fill:#18181b,stroke:#3f3f46,color:#e4e4e7
+    style Reviewers fill:#18181b,stroke:#3f3f46,color:#e4e4e7
+    style Quality fill:#18181b,stroke:#3f3f46,color:#e4e4e7
+    style Support fill:#18181b,stroke:#3f3f46,color:#e4e4e7
 `;
 
-const worktreeChart = `sequenceDiagram
-    participant O as Orchestrator
-    participant W1 as Worktree A<br/>(night-coder)
-    participant W2 as Worktree B<br/>(night-coder)
-    participant W3 as Worktree C<br/>(night-tester)
-    participant M as Main Branch
+const errorEscalationChart = `flowchart LR
+    Fail["Task Failure"]
 
-    O->>W1: Spawn task 1 (parallel)
-    O->>W2: Spawn task 2 (parallel)
-    O->>W3: Spawn task 3 (parallel)
+    subgraph T1["Tier 1: Retry (1-3)"]
+        H1["night-fixer<br/>(haiku)"]
+        R1["Reflexion:<br/>self-critique before retry"]
+        PV["Prompt variation:<br/>reframe each attempt"]
+    end
 
-    Note over W1,W3: Each agent works in its own<br/>git worktree (isolated copy)
+    subgraph T2["Tier 2: Rollback (4-6)"]
+        RB["git stash + checkout<br/>last clean commit"]
+        AT["Agent team:<br/>3-5 competing hypotheses"]
+        AD["Adversarial debate<br/>different architecture"]
+    end
 
-    W1-->>O: Task 1 complete
-    W2-->>O: Task 2 complete
-    W3-->>O: Task 3 complete
+    subgraph T3["Tier 3: Blocked (7+)"]
+        BL["Mark BLOCKED"]
+        LG["Log full trajectory<br/>ERRORS.json + PROBLEMS.md"]
+        WIP["Commit WIP<br/>move to next task"]
+    end
 
-    O->>M: Merge worktree A (no-ff)
-    O->>M: Merge worktree B (no-ff)
-    O->>M: Merge worktree C (no-ff)
+    Fail --> T1
+    T1 -->|"still failing"| T2
+    T2 -->|"still failing"| T3
 
-    Note over M: Sequential merge avoids<br/>parallel conflict resolution
-
-    O->>M: Validate (build + test + lint)
-`;
-
-const ganQaChart = `graph TD
-    Build["night-coder builds feature"]
-    Static{"Static validation\nbuild + test + lint"}
-    DevServer["Start dev server"]
-    QA["night-qa evaluates against\nsprint contract"]
-    Verdict{"QA Verdict"}
-    Pass["PASS\n(score >= 4.0, 0 critical)"]
-    Fix["night-fixer applies fixes"]
-    Fail["FAIL\nlog to PROBLEMS"]
-    Counter{"Iteration\ncount < 5?"}
-    WIP["Mark as PARTIAL\ncommit WIP, move on"]
-    Done["Mark task done\nnext feature"]
-
-    Build --> Static
-    Static -->|"pass"| DevServer
-    Static -->|"fail"| Fix
-    DevServer --> QA
-    QA --> Verdict
-    Verdict -->|"PASS"| Pass
-    Verdict -->|"ITERATE"| Fix
-    Verdict -->|"FAIL"| Fail
-    Pass --> Done
-    Fix --> Counter
-    Counter -->|"yes"| QA
-    Counter -->|"no (5 iterations)"| WIP
-
-    style Build fill:#1e3a5f,stroke:#3b82f6,color:#e4e4e7
-    style QA fill:#3b1f5e,stroke:#a855f7,color:#e4e4e7
-    style Pass fill:#1a3a2a,stroke:#22c55e,color:#e4e4e7
     style Fail fill:#5f1e1e,stroke:#ef4444,color:#e4e4e7
-    style Fix fill:#3b2f1a,stroke:#f59e0b,color:#e4e4e7
-    style WIP fill:#5f1e1e,stroke:#ef4444,color:#e4e4e7
-    style Done fill:#1a3a2a,stroke:#22c55e,color:#e4e4e7
+    style H1 fill:#27272a,stroke:#71717a,color:#e4e4e7
+    style R1 fill:#3b2f1a,stroke:#f59e0b,color:#e4e4e7
+    style PV fill:#3b2f1a,stroke:#f59e0b,color:#e4e4e7
+    style RB fill:#1e3a5f,stroke:#3b82f6,color:#e4e4e7
+    style AT fill:#1e3a5f,stroke:#3b82f6,color:#e4e4e7
+    style AD fill:#3b1f5e,stroke:#a855f7,color:#e4e4e7
+    style BL fill:#5f1e1e,stroke:#ef4444,color:#e4e4e7
+    style LG fill:#3b2f1a,stroke:#f59e0b,color:#e4e4e7
+    style WIP fill:#27272a,stroke:#71717a,color:#e4e4e7
+    style T1 fill:#18181b,stroke:#3f3f46,color:#e4e4e7
+    style T2 fill:#18181b,stroke:#3f3f46,color:#e4e4e7
+    style T3 fill:#18181b,stroke:#3f3f46,color:#e4e4e7
 `;
 
-const stateManagementChart = `graph LR
-    subgraph IterN["Iteration N"]
-        Read1["Read state"]
-        Work1["Execute tasks"]
-        Write1["Write updated state"]
+const stateManagementChart = `graph TD
+    subgraph StateJSON["STATE.json (compact fields)"]
+        V["v: 5.0"]
+        Tasks["tasks: id, t, s, p, deps, grp,<br/>agent, model, iso, tests_w, tests_p"]
+        Gate["gate: on, loops, clean, max"]
+        Budget["budget: max, cur, alert,<br/>opus, sonnet, haiku, calls"]
+        Doom["doom: file_edits, err_hashes,<br/>diff_hashes, test_fails"]
+        Pre["prefetch: tasks, files, ifaces"]
+        Log["log: last 5 entries only"]
     end
 
-    subgraph Hook["Ralph-Loop Stop Hook"]
-        Exit1["Agent exits"]
-        Hook1["Hook triggers"]
-        Fresh1["New context spawned"]
+    subgraph Trimming["Auto-Trimming Rules"]
+        TR1["log: keep last 5, delete older"]
+        TR2["completed tasks: strip tries/blocked"]
+        TR3["doom counters: reset on resolution"]
+        TR4["gate.prev_hashes: last loop only"]
+        TR5["prefetch: overwrite each iter"]
     end
 
-    subgraph IterN1["Iteration N+1"]
-        Read2["Read state"]
-        Work2["Execute next tasks"]
-        Write2["Write updated state"]
+    subgraph Reads["Selective Reads"]
+        SR1["STATE.json: full read<br/>(max 50 lines post-trim)"]
+        SR2["ERRORS.json: jq filter<br/>unresolved only"]
+        SR3["Full ERRORS.json: only<br/>when spawning fixer"]
     end
 
-    StateFile[("NIGHT_SHIFT_STATE.md\n---\nIteration: N\nCompleted: tasks 1-5\nPending: tasks 6-10\nCheckpoint: abc123\n---")]
+    StateJSON --> Trimming
+    Trimming --> Reads
 
-    Read1 --> Work1
-    Work1 --> Write1
-    Write1 --> StateFile
-    Write1 --> Exit1
-    Exit1 --> Hook1
-    Hook1 --> Fresh1
-    Fresh1 --> Read2
-    StateFile --> Read2
-    Read2 --> Work2
-    Work2 --> Write2
-
-    style StateFile fill:#3b2f1a,stroke:#f59e0b,color:#e4e4e7
-    style Hook1 fill:#3b1f5e,stroke:#a855f7,color:#e4e4e7
-    style Fresh1 fill:#1e3a5f,stroke:#3b82f6,color:#e4e4e7
+    style V fill:#3b2f1a,stroke:#f59e0b,color:#e4e4e7
+    style Tasks fill:#1e3a5f,stroke:#3b82f6,color:#e4e4e7
+    style Gate fill:#1a3a2a,stroke:#22c55e,color:#e4e4e7
+    style Budget fill:#3b2f1a,stroke:#f59e0b,color:#e4e4e7
+    style Doom fill:#5f1e1e,stroke:#ef4444,color:#e4e4e7
+    style Pre fill:#3b1f5e,stroke:#a855f7,color:#e4e4e7
+    style Log fill:#27272a,stroke:#71717a,color:#e4e4e7
+    style StateJSON fill:#18181b,stroke:#3f3f46,color:#e4e4e7
+    style Trimming fill:#18181b,stroke:#3f3f46,color:#e4e4e7
+    style Reads fill:#18181b,stroke:#3f3f46,color:#e4e4e7
 `;
 
-const v3AgentTeamsChart = `graph TD
-    subgraph Execution["Execution Phase (same as v2)"]
-        RL["Ralph-Loop"]
-        Sub["Subagents + Worktrees"]
-        State["NIGHT_SHIFT_STATE.md"]
-        RL --> Sub
-        Sub --> State
+const auditWrapperChart = `flowchart TD
+    Trigger["All tasks done<br/>enter Stability Gate"]
+    Wrapper["Single Audit Wrapper Agent<br/>(opus)"]
+
+    subgraph Personas["6 Audit Personas (fresh each loop)"]
+        P1["Architect<br/>system design, boundaries"]
+        P2["Domain Expert<br/>business logic, edge cases"]
+        P3["Code Expert<br/>DRY, types, leaks, naming"]
+        P4["Performance Expert<br/>allocations, N+1, bundle"]
+        P5["Security Expert<br/>OWASP, secrets, injection"]
+        P6["Human Advocate<br/>usability, a11y, mobile"]
     end
 
-    subgraph Audit["Audit Phase (Agent Teams)"]
-        Lead["Team Lead (orchestrator)"]
-        Sec["Security Reviewer"]
-        Code["Code Quality Reviewer"]
-        Read2["Readability Reviewer"]
-        Res["Research Reviewer"]
-        Lead --> Sec
-        Lead --> Code
-        Lead --> Read2
-        Lead --> Res
-        Sec <-->|"challenge findings"| Code
-        Code <-->|"cross-validate"| Read2
-        Read2 <-->|"verify impact"| Sec
-        Res <-->|"known issues"| Code
+    subgraph Cross["Cross-Validation Matrix"]
+        XV1["Architect + Code<br/>on boundaries"]
+        XV2["Security + Performance<br/>on rate limiting"]
+        XV3["Domain + Human<br/>on error messages"]
+        XV4["Performance + Security<br/>on caching"]
     end
 
-    subgraph Debug["Debugging Fallback (Agent Teams)"]
-        Trigger["night-fixer fails 3x"]
-        Team["3-5 teammates"]
-        H1["Hypothesis A"]
-        H2["Hypothesis B"]
-        H3["Hypothesis C"]
-        Consensus["Adversarial debate\nthen consensus fix"]
-        Trigger --> Team
-        Team --> H1
-        Team --> H2
-        Team --> H3
-        H1 --> Consensus
-        H2 --> Consensus
-        H3 --> Consensus
-    end
+    Findings{"Critical or high<br/>findings?"}
+    Fix["night-fixer"]
+    Clean["Clean pass<br/>consecutive_clean += 1"]
+    Check{"3 consecutive<br/>clean passes?"}
+    RepCheck{"Findings repeat<br/>over 70%?"}
+    Done["Gate PASSED"]
+    Cap{"Loop count<br/>over 10?"}
+    WIP["Gate CAPPED<br/>WIP PR"]
 
-    State -->|"all tasks done"| Lead
-    State -->|"fixer failed 3x"| Trigger
+    Trigger --> Wrapper
+    Wrapper --> Personas
+    Personas --> Cross
+    Cross --> Findings
+    Findings -->|"yes"| Fix
+    Fix -->|"re-audit"| Wrapper
+    Findings -->|"no"| Clean
+    Clean --> Check
+    Check -->|"yes"| Done
+    Check -->|"no"| RepCheck
+    RepCheck -->|"yes"| Done
+    RepCheck -->|"no"| Cap
+    Cap -->|"yes"| WIP
+    Cap -->|"no"| Wrapper
 
-    style Execution fill:#18181b,stroke:#3f3f46,color:#e4e4e7
-    style Audit fill:#18181b,stroke:#a855f7,color:#e4e4e7
-    style Debug fill:#18181b,stroke:#ef4444,color:#e4e4e7
-    style Lead fill:#3b1f5e,stroke:#a855f7,color:#e4e4e7
-    style Consensus fill:#1a3a2a,stroke:#22c55e,color:#e4e4e7
-    style Trigger fill:#5f1e1e,stroke:#ef4444,color:#e4e4e7
-`;
-
-const auditLoopChart = `graph TD
-    Start(["Audit Loop Start"])
-    Spawn["Spawn audit team\n(4 reviewers in parallel)"]
-
-    subgraph Team["Audit Team"]
-        S["Security\nReviewer"]
-        C["Code Quality\nReviewer"]
-        R["Readability\nReviewer"]
-        Re["Research\nReviewer"]
-        S <-->|"message"| C
-        C <-->|"message"| R
-        R <-->|"message"| Re
-        Re <-->|"message"| S
-    end
-
-    Investigate["Investigate codebase"]
-    Challenge["Challenge each other's findings"]
-    Consensus["Reach consensus\nrate: critical / high / medium / low"]
-    HasIssues{"Critical or high\nfindings?"}
-    Fix["Fix critical + high issues\n(night-fixer agents)"]
-    Validate{"Validate\nbuild + test + lint"}
-    Count{"Loop count\n>= 3?"}
-    Clean["All clear\n0 critical/high findings"]
-    NextLoop["Next audit loop\n(fresh team)"]
-    Finalize["Proceed to finalization"]
-
-    Start --> Spawn
-    Spawn --> Team
-    Team --> Investigate
-    Investigate --> Challenge
-    Challenge --> Consensus
-    Consensus --> HasIssues
-    HasIssues -->|"yes"| Fix
-    HasIssues -->|"no"| Count
-    Fix --> Validate
-    Validate -->|"pass"| NextLoop
-    Validate -->|"fail"| Fix
-    Count -->|"< 3 loops"| NextLoop
-    Count -->|">= 3 and clean"| Finalize
-    NextLoop --> Start
-
-    style Start fill:#3b1f5e,stroke:#a855f7,color:#e4e4e7
-    style Clean fill:#1a3a2a,stroke:#22c55e,color:#e4e4e7
+    style Trigger fill:#3b2f1a,stroke:#f59e0b,color:#e4e4e7
+    style Wrapper fill:#3b1f5e,stroke:#a855f7,color:#e4e4e7
     style Fix fill:#5f1e1e,stroke:#ef4444,color:#e4e4e7
-    style Finalize fill:#1a3a2a,stroke:#22c55e,color:#e4e4e7
-    style Team fill:#18181b,stroke:#3f3f46,color:#e4e4e7
+    style Done fill:#1a3a2a,stroke:#22c55e,color:#e4e4e7
+    style WIP fill:#5f1e1e,stroke:#ef4444,color:#e4e4e7
+    style Personas fill:#18181b,stroke:#3f3f46,color:#e4e4e7
+    style Cross fill:#18181b,stroke:#3f3f46,color:#e4e4e7
+    style P1 fill:#1e3a5f,stroke:#3b82f6,color:#e4e4e7
+    style P2 fill:#1e3a5f,stroke:#3b82f6,color:#e4e4e7
+    style P3 fill:#1e3a5f,stroke:#3b82f6,color:#e4e4e7
+    style P4 fill:#1e3a5f,stroke:#3b82f6,color:#e4e4e7
+    style P5 fill:#1e3a5f,stroke:#3b82f6,color:#e4e4e7
+    style P6 fill:#1e3a5f,stroke:#3b82f6,color:#e4e4e7
+`;
+
+const ganQaChart = `sequenceDiagram
+    participant Spec as Enriched Spec
+    participant Coder as night-coder<br/>(generator)
+    participant Build as Build + Test + Lint
+    participant Critic as code-reviewer<br/>(critic / opus)
+    participant QA as night-qa<br/>(opus 4.7)
+    participant Fixer as night-fixer
+
+    Note over Spec,Critic: GAN pattern: critic sees ONLY spec + output code
+    Note over Spec,Critic: Never share generator reasoning or conversation
+
+    Spec->>Coder: task + acceptance criteria
+    Coder->>Build: implementation
+    Build-->>Build: validate
+
+    Build->>Critic: spec + changed files only
+    Critic-->>Critic: adversarial review
+
+    alt Critic finds critical/high
+        Critic->>Fixer: audit findings
+        Fixer->>Build: fix + re-validate
+        Build->>Critic: re-review (max 3 cycles)
+    end
+
+    Note over QA: UI tasks only
+
+    Build->>QA: start dev server
+    QA-->>QA: evaluate against sprint contract
+    alt QA verdict = ITERATE
+        QA->>Fixer: issues list
+        Fixer->>Build: targeted repairs
+        Build->>QA: re-evaluate (max 5 cycles)
+    end
+
+    QA-->>Spec: PASS or mark PARTIAL
+`;
+
+const cacheOptimizationChart = `graph LR
+    subgraph Frozen["Frozen Prefix<br/>(identical across agents of same type)"]
+        R["Role + instructions"]
+        AH["Anti-hallucination rules"]
+        OF["Output format template"]
+        CC["Concurrency rules"]
+        CMD["Build / test / lint commands"]
+    end
+
+    subgraph Semi["Semi-Stable<br/>(changes per project, not per task)"]
+        DS["Domain skill reference"]
+        GTD["Ground truth docs"]
+    end
+
+    subgraph Variable["Variable Suffix<br/>(changes per task)"]
+        T["Task description +<br/>acceptance criteria"]
+        F["File list to read/modify"]
+        I["Interfaces + type defs"]
+        L["Lessons from ERRORS.json<br/>(filtered by overlap)"]
+    end
+
+    KV["KV-Cache<br/>Hit Rate"]
+
+    Frozen -->|"100% cached"| KV
+    Semi -->|"high hit rate"| KV
+    Variable -->|"always recomputed"| KV
+
+    style Frozen fill:#1a3a2a,stroke:#22c55e,color:#e4e4e7
+    style Semi fill:#3b2f1a,stroke:#f59e0b,color:#e4e4e7
+    style Variable fill:#5f1e1e,stroke:#ef4444,color:#e4e4e7
+    style KV fill:#3b1f5e,stroke:#a855f7,color:#e4e4e7
+    style R fill:#1a3a2a,stroke:#22c55e,color:#e4e4e7
+    style AH fill:#1a3a2a,stroke:#22c55e,color:#e4e4e7
+    style OF fill:#1a3a2a,stroke:#22c55e,color:#e4e4e7
+    style CC fill:#1a3a2a,stroke:#22c55e,color:#e4e4e7
+    style CMD fill:#1a3a2a,stroke:#22c55e,color:#e4e4e7
+    style DS fill:#3b2f1a,stroke:#f59e0b,color:#e4e4e7
+    style GTD fill:#3b2f1a,stroke:#f59e0b,color:#e4e4e7
+    style T fill:#5f1e1e,stroke:#ef4444,color:#e4e4e7
+    style F fill:#5f1e1e,stroke:#ef4444,color:#e4e4e7
+    style I fill:#5f1e1e,stroke:#ef4444,color:#e4e4e7
+    style L fill:#5f1e1e,stroke:#ef4444,color:#e4e4e7
 `;
 
 /* ------------------------------------------------------------------ */
@@ -341,12 +399,24 @@ export default function ArchitecturePage() {
     <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
       {/* Header */}
       <h1 className="mb-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-        Architecture
+        Architecture{" "}
+        <span className="text-lg font-normal text-zinc-500">v5</span>
       </h1>
       <p className="mb-12 text-lg text-zinc-400">
-        System design, component diagrams, and data flow of the NightShift
-        pipeline. Each section below details a key architectural concept with an
-        interactive Mermaid diagram.
+        Night Shift v5 is a unified autonomous pipeline: test-first development,
+        immutable ground truth documents, compact JSON state, model tiering
+        across 8 agent types, pipelining for overlapping iterations, a GAN-inspired
+        critic pattern, 6-persona audit wrapper, doom-loop detection, and cost
+        tracking with budget enforcement. Every iteration runs in a fresh context
+        window via ralph-loop, with{" "}
+        <code className="rounded bg-zinc-800 px-1.5 py-0.5 text-sm text-zinc-300">
+          STATE.json
+        </code>{" "}
+        and{" "}
+        <code className="rounded bg-zinc-800 px-1.5 py-0.5 text-sm text-zinc-300">
+          ERRORS.json
+        </code>{" "}
+        as the only persistent memory.
       </p>
 
       {/* Table of Contents */}
@@ -375,154 +445,238 @@ export default function ArchitecturePage() {
           1. System Overview
         </h2>
         <p className="mb-6 leading-relaxed text-zinc-400">
-          NightShift transforms a user-written spec into a review-ready pull
-          request overnight. The user triggers the process via{" "}
-          <code className="rounded bg-zinc-800 px-1.5 py-0.5 text-sm text-zinc-300">
-            night-shift.sh
-          </code>
-          , which sets up a ralph-loop stop hook and launches Claude Code. The
-          orchestrator reads persisted state, spawns parallel agents in isolated
-          worktrees, validates their output, and loops until all tasks are
-          complete. The stop hook is the key mechanism: every time the
-          orchestrator exits, it re-feeds the same prompt into a fresh context
-          window, creating an indefinite iteration cycle bounded only by task
-          completion or a max-iteration cap.
+          The v5 pipeline chains 14 architectural components in a single loop.
+          Ralph-loop provides fresh context each iteration. State and error files
+          persist across iterations as the sole memory bridge. Ground truth
+          documents (brainstorm, health audit, docs audit) are created once and
+          never modified, giving every agent an immutable reference frame.
+          Test-first flow ensures every task has failing tests before
+          implementation begins. Model tiering assigns opus, sonnet, or haiku by
+          cognitive demand. Pipelining overlaps the current iteration with
+          prefetching for the next. The audit wrapper runs a single agent that
+          spawns 6 expert personas and requires 3 consecutive clean passes before
+          the PR is created.
         </p>
         <MermaidDiagram chart={systemOverviewChart} />
       </section>
 
-      {/* 2. Ralph-Loop Iteration Cycle */}
-      <section id="ralph-loop" className="mb-20 scroll-mt-24">
+      {/* 2. 19-Step Iteration Flow */}
+      <section id="iteration-flow" className="mb-20 scroll-mt-24">
         <h2 className="mb-3 text-2xl font-bold text-white">
-          2. Ralph-Loop Iteration Cycle
+          2. 19-Step Iteration Flow
         </h2>
         <p className="mb-6 leading-relaxed text-zinc-400">
-          Each iteration follows a strict nine-step pipeline. The orchestrator
-          reads the state file to discover what was done in previous iterations
-          (it has no memory), collects all tasks whose dependencies are
-          satisfied, then spawns one agent per task in parallel. After all agents
-          finish, their worktree branches are merged sequentially, and the
-          combined result is validated. Failures trigger the night-fixer agent
-          for up to three repair attempts. Finally, state is updated and the
-          orchestrator either finalizes the PR (all done) or exits so the stop
-          hook can start the next iteration with a fresh context window.
+          Each ralph-loop iteration follows a strict 19-step sequence. Steps 1-6
+          load context: state, errors (unresolved only via{" "}
+          <code className="rounded bg-zinc-800 px-1.5 py-0.5 text-sm text-zinc-300">
+            jq
+          </code>
+          ), learnings, prefetch cache, init script, and recent git history.
+          Steps 7-8 run doom-loop and idle detection to catch oscillating edits,
+          repeated errors, or stalled progress. Step 9 enforces test-first by
+          verifying tests exist and fail. Steps 10-11 execute tasks in parallel
+          worktrees while pipelining prefetches the next iteration. Steps 12-14
+          collect results with early abort on critical failures and escalate
+          through 3 tiers. Steps 15-16 run the critic (information-isolated) and
+          QA cycle (UI only). Steps 17-18 update state with auto-trimming and
+          commit. Step 19 either enters the stability gate or exits for the next
+          ralph-loop iteration.
         </p>
-        <MermaidDiagram chart={ralphLoopChart} />
+        <MermaidDiagram chart={iterationFlowChart} />
       </section>
 
-      {/* 3. Agent Hierarchy */}
-      <section id="agent-hierarchy" className="mb-20 scroll-mt-24">
+      {/* 3. Agent Roster & Model Tiering */}
+      <section id="agent-roster" className="mb-20 scroll-mt-24">
         <h2 className="mb-3 text-2xl font-bold text-white">
-          3. Agent Hierarchy
+          3. Agent Roster & Model Tiering
+        </h2>
+        <p className="mb-4 leading-relaxed text-zinc-400">
+          V5 uses 8 specialized agent types. Each is assigned a model tier based
+          on cognitive demand, achieving an estimated 83% cost reduction compared
+          to running everything on opus. Code-writing agents run in isolated git
+          worktrees. Reviewers and QA agents are read-only on the main branch.
+          Safety tiers enforce tool filtering at the schema level: reviewers
+          never write, QA never edits, research never executes.
+        </p>
+        <div className="mb-6 overflow-x-auto rounded-lg border border-zinc-800">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-zinc-800 bg-zinc-900">
+                <th className="px-4 py-3 font-semibold text-zinc-300">Agent</th>
+                <th className="px-4 py-3 font-semibold text-zinc-300">Model</th>
+                <th className="px-4 py-3 font-semibold text-zinc-300">Isolation</th>
+                <th className="px-4 py-3 font-semibold text-zinc-300">Role</th>
+              </tr>
+            </thead>
+            <tbody className="text-zinc-400">
+              <tr className="border-b border-zinc-800/50">
+                <td className="px-4 py-2.5 font-mono text-blue-400">night-coder</td>
+                <td className="px-4 py-2.5">sonnet <span className="text-zinc-600">/</span> opus 4.7 <span className="text-xs text-zinc-500">(UI)</span></td>
+                <td className="px-4 py-2.5">worktree</td>
+                <td className="px-4 py-2.5">Feature implementation</td>
+              </tr>
+              <tr className="border-b border-zinc-800/50">
+                <td className="px-4 py-2.5 font-mono text-blue-400">night-tester</td>
+                <td className="px-4 py-2.5">sonnet</td>
+                <td className="px-4 py-2.5">worktree</td>
+                <td className="px-4 py-2.5">Test spec generation (red phase)</td>
+              </tr>
+              <tr className="border-b border-zinc-800/50">
+                <td className="px-4 py-2.5 font-mono text-green-400">night-qa</td>
+                <td className="px-4 py-2.5">opus 4.7</td>
+                <td className="px-4 py-2.5">none</td>
+                <td className="px-4 py-2.5">UI evaluation via Playwright</td>
+              </tr>
+              <tr className="border-b border-zinc-800/50">
+                <td className="px-4 py-2.5 font-mono text-red-400">night-fixer</td>
+                <td className="px-4 py-2.5">haiku → sonnet → opus</td>
+                <td className="px-4 py-2.5">worktree</td>
+                <td className="px-4 py-2.5">Diagnose and fix failures</td>
+              </tr>
+              <tr className="border-b border-zinc-800/50">
+                <td className="px-4 py-2.5 font-mono text-yellow-400">code-reviewer</td>
+                <td className="px-4 py-2.5">sonnet</td>
+                <td className="px-4 py-2.5">none</td>
+                <td className="px-4 py-2.5">Post-merge adversarial review</td>
+              </tr>
+              <tr className="border-b border-zinc-800/50">
+                <td className="px-4 py-2.5 font-mono text-yellow-400">security-reviewer</td>
+                <td className="px-4 py-2.5">sonnet</td>
+                <td className="px-4 py-2.5">none</td>
+                <td className="px-4 py-2.5">OWASP, auth, secrets audit</td>
+              </tr>
+              <tr className="border-b border-zinc-800/50">
+                <td className="px-4 py-2.5 font-mono text-zinc-500">Explore</td>
+                <td className="px-4 py-2.5">haiku</td>
+                <td className="px-4 py-2.5">none</td>
+                <td className="px-4 py-2.5">Read-only research</td>
+              </tr>
+              <tr>
+                <td className="px-4 py-2.5 font-mono text-purple-400">skill-forge</td>
+                <td className="px-4 py-2.5">opus</td>
+                <td className="px-4 py-2.5">none</td>
+                <td className="px-4 py-2.5">Domain skill generation</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p className="mb-6 text-sm text-zinc-500">
+          Override rule: if a sonnet agent fails 2x on the same task, it retries
+          with opus. The upgrade is logged in ERRORS.json.
+        </p>
+        <MermaidDiagram chart={agentRosterChart} />
+      </section>
+
+      {/* 4. 3-Tier Error Escalation */}
+      <section id="error-escalation" className="mb-20 scroll-mt-24">
+        <h2 className="mb-3 text-2xl font-bold text-white">
+          4. 3-Tier Error Escalation
         </h2>
         <p className="mb-6 leading-relaxed text-zinc-400">
-          The orchestrator delegates all heavy work to specialized agents,
-          keeping its own context lean. Code-writing agents (night-coder,
-          night-tester, night-fixer) run in isolated git worktrees to avoid
-          conflicts during parallel execution. Non-code agents (night-qa,
-          code-reviewer, security-reviewer, Explore) run directly on the main
-          branch since they either produce reports or perform read-only
-          operations. Each agent type has a dedicated system prompt defining its
-          role, coding rules, and workflow.
+          Failures escalate through three tiers. <strong className="text-zinc-300">Tier 1</strong> (attempts
+          1-3) spawns night-fixer on haiku with Reflexion: before each retry, the
+          fixer writes a self-critique explaining why the previous approach
+          failed, identifies the root cause, and proposes a different strategy.
+          Prompt variation reformulates each attempt to avoid pattern lock-in.{" "}
+          <strong className="text-zinc-300">Tier 2</strong> (attempts 4-6) rolls back to the last clean
+          commit and spawns an agent team of 3-5 teammates investigating
+          competing hypotheses through adversarial debate.{" "}
+          <strong className="text-zinc-300">Tier 3</strong> (7+) marks the task as blocked, logs the
+          full trajectory to ERRORS.json and PROBLEMS.md, commits a WIP, and
+          moves to the next independent task.
         </p>
-        <MermaidDiagram chart={agentHierarchyChart} />
+        <MermaidDiagram chart={errorEscalationChart} />
       </section>
 
-      {/* 4. Worktree Isolation Model */}
-      <section id="worktree-isolation" className="mb-20 scroll-mt-24">
-        <h2 className="mb-3 text-2xl font-bold text-white">
-          4. Worktree Isolation Model
-        </h2>
-        <p className="mb-6 leading-relaxed text-zinc-400">
-          Parallel agents need isolation to avoid stepping on each other's
-          changes. NightShift achieves this through git worktrees: each agent
-          gets its own working directory backed by a separate branch. Agents
-          work simultaneously without conflicts. Once all agents complete, the
-          orchestrator merges each worktree branch back into the night-shift
-          branch one at a time. Sequential merging ensures that any rare
-          conflicts (e.g., two agents touching a shared file) are resolved in a
-          deterministic order rather than racing.
-        </p>
-        <MermaidDiagram chart={worktreeChart} />
-      </section>
-
-      {/* 5. GAN-Inspired QA Cycle */}
-      <section id="gan-qa" className="mb-20 scroll-mt-24">
-        <h2 className="mb-3 text-2xl font-bold text-white">
-          5. GAN-Inspired QA Cycle
-        </h2>
-        <p className="mb-6 leading-relaxed text-zinc-400">
-          For UI and interactive features, NightShift uses an adversarial
-          build-evaluate-fix loop inspired by Generative Adversarial Networks.
-          The night-coder builds a feature, static validation checks
-          compilation, then night-qa evaluates the running application against a
-          sprint contract via Playwright. If night-qa finds issues, it returns an
-          ITERATE verdict and night-fixer applies targeted repairs. The loop runs
-          up to five times per feature. This creates a generator (night-coder) vs
-          discriminator (night-qa) dynamic that converges on quality without
-          human intervention.
-        </p>
-        <MermaidDiagram chart={ganQaChart} />
-      </section>
-
-      {/* 6. State Management Flow */}
+      {/* 5. State Management */}
       <section id="state-management" className="mb-20 scroll-mt-24">
         <h2 className="mb-3 text-2xl font-bold text-white">
-          6. State Management Flow
+          5. State Management
         </h2>
         <p className="mb-6 leading-relaxed text-zinc-400">
-          Since each iteration runs in a fresh context window with no memory of
-          previous iterations,{" "}
+          V5 uses JSON for STATE and ERRORS (enabling{" "}
           <code className="rounded bg-zinc-800 px-1.5 py-0.5 text-sm text-zinc-300">
-            NIGHT_SHIFT_STATE.md
+            jq
           </code>{" "}
-          serves as the sole persistent memory. At the end of each iteration, the
-          orchestrator writes the current task status, last commit checkpoint,
-          and validation results to this file. When the ralph-loop stop hook
-          spawns a new context, the first thing the fresh orchestrator does is
-          read this file to understand what has been accomplished and what
-          remains. This file-as-memory pattern allows indefinite execution across
-          unlimited context windows.
+          selective reads) with compact field names ({" "}
+          <code className="rounded bg-zinc-800 px-1.5 py-0.5 text-sm text-zinc-300">
+            t, s, p, grp
+          </code>{" "}
+          instead of title, status, priority, parallel_group) saving ~25% tokens
+          per read. Auto-trimming keeps state under ~50 lines: the log array
+          retains only the last 5 entries, completed tasks have their retry
+          metadata stripped, doom counters reset on resolution, and prefetch is
+          overwritten each iteration. ERRORS.json is read selectively by default
+          (unresolved count only), with a full read triggered only when spawning
+          a fixer for a specific error hash. A hard context budget rule forces
+          early iteration exit if 5+ agent results were processed or 3+ large
+          files were read.
         </p>
         <MermaidDiagram chart={stateManagementChart} />
       </section>
 
-      {/* 7. V3 Agent Teams Architecture */}
-      <section id="v3-agent-teams" className="mb-20 scroll-mt-24">
+      {/* 6. Audit Wrapper */}
+      <section id="audit-wrapper" className="mb-20 scroll-mt-24">
         <h2 className="mb-3 text-2xl font-bold text-white">
-          7. V3 Agent Teams Architecture
+          6. Audit Wrapper (6 Personas)
         </h2>
         <p className="mb-6 leading-relaxed text-zinc-400">
-          Night Shift v3 extends v2 with Claude Code Agent Teams for two
-          specific phases. The execution phase remains unchanged: ralph-loop,
-          worktree-isolated subagents, and state-file memory. The audit phase
-          replaces isolated parallel reviewers with an Agent Team where four
-          reviewers can message each other to challenge findings and cross-
-          validate in real time. The debugging fallback activates when
-          night-fixer fails three times: instead of logging and skipping, a team
-          of 3-5 agents tests competing hypotheses through adversarial debate to
-          find the root cause.
+          The stability gate is handled by a single wrapper agent (opus) that
+          keeps the orchestrator's context clean. Internally, each audit loop
+          creates a fresh team of 6 expert personas: Architect (validates against
+          ground truth brainstorm), Domain Expert (validates against enriched
+          spec), Code Expert (DRY, types, leaks), Performance Expert
+          (allocations, N+1, bundle), Security Expert (OWASP top 10), and Human
+          Advocate (usability, a11y, mobile). Cross-validation pairs overlap:
+          Architect+Code on boundaries, Security+Performance on rate limiting,
+          Domain+Human on error messages, Performance+Security on caching.
+          Personas use rhetorical questions over directives. Only critical and
+          high findings trigger fixes between loops. The gate requires 3
+          consecutive clean passes, exits on 70%+ finding repetition, and caps at
+          10 loops.
         </p>
-        <MermaidDiagram chart={v3AgentTeamsChart} />
+        <MermaidDiagram chart={auditWrapperChart} />
       </section>
 
-      {/* 8. Audit Loop Cycle */}
-      <section id="audit-loop" className="mb-20 scroll-mt-24">
+      {/* 7. GAN-QA Pattern */}
+      <section id="gan-qa" className="mb-20 scroll-mt-24">
         <h2 className="mb-3 text-2xl font-bold text-white">
-          8. Audit Loop Cycle
+          7. GAN-QA Pattern
         </h2>
         <p className="mb-6 leading-relaxed text-zinc-400">
-          After all implementation tasks are complete, NightShift runs a minimum
-          of three full audit loops. Each loop spawns a fresh team of four
-          reviewers (security, code quality, readability, research) who
-          investigate the codebase, challenge each other's findings through
-          inter-agent messaging, and converge on a consensus severity rating. All
-          critical and high findings are fixed immediately by night-fixer agents,
-          then validated. The loop repeats with a brand-new team each time for
-          fresh perspective. Auditing exits only when a full loop produces zero
-          critical or high findings and at least three loops have completed.
+          V5 enforces information isolation between generator and critic to
+          prevent confirmation bias. The critic (code-reviewer on opus) receives
+          only the spec and the output code. It never sees the generator's
+          reasoning, task description, or conversation history. If the critic
+          finds critical or high issues, night-fixer applies targeted repairs and
+          the critic re-reviews (max 3 cycles). Criticism repetition above 70%
+          triggers acceptance with a PROBLEMS.md log. For UI tasks, night-qa
+          (opus 4.7) evaluates the running application against a sprint contract
+          via Playwright, looping up to 5 times with targeted fixes between each
+          evaluation.
         </p>
-        <MermaidDiagram chart={auditLoopChart} />
+        <MermaidDiagram chart={ganQaChart} />
+      </section>
+
+      {/* 8. Cache Optimization */}
+      <section id="cache-optimization" className="mb-20 scroll-mt-24">
+        <h2 className="mb-3 text-2xl font-bold text-white">
+          8. Cache Optimization
+        </h2>
+        <p className="mb-6 leading-relaxed text-zinc-400">
+          Agent prompts use a 3-tier structure to maximize KV-cache hit rates
+          (10x cost reduction on cached tokens). The <strong className="text-zinc-300">frozen prefix</strong>{" "}
+          is identical across all agents of the same type: role, anti-hallucination
+          rules, output format, concurrency rules, and build commands. The{" "}
+          <strong className="text-zinc-300">semi-stable layer</strong> changes per project but not per
+          task: domain skill references and ground truth documents. The{" "}
+          <strong className="text-zinc-300">variable suffix</strong> changes per task: task description,
+          file list, interfaces, and lessons filtered from ERRORS.json by
+          task/file overlap. Dynamic content (state files, agent results) is
+          always appended at the end of context, never inserted in the middle.
+          Unchanged files are never re-read between iterations.
+        </p>
+        <MermaidDiagram chart={cacheOptimizationChart} />
       </section>
     </div>
   );

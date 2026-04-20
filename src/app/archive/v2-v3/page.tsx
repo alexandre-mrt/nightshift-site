@@ -4,9 +4,9 @@ import MermaidDiagram from "@/components/MermaidDiagram";
 
 /* ─── Stats ─── */
 const stats = [
-  { value: "8", label: "Specialized agents" },
-  { value: "19", label: "Iteration steps" },
-  { value: "6", label: "Audit personas" },
+  { value: "6-8h", label: "Autonomous runtime" },
+  { value: "7", label: "Specialized agents" },
+  { value: "3+", label: "Audit cycles" },
   { value: "Zero", label: "Hallucination tolerance" },
 ];
 
@@ -24,13 +24,13 @@ const features = [
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"
+          d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-1.053M18 8.25a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM10.5 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
         />
       </svg>
     ),
-    title: "Test-First Flow",
+    title: "Specialized Agents",
     description:
-      "Tests are written before implementation. Red phase confirms specs fail, green phase drives convergence. Every iteration has an objective criterion: are the tests passing?",
+      "Seven purpose-built agents — coder, tester, QA, fixer, code reviewer, security reviewer — each with focused system prompts and isolated contexts.",
   },
   {
     icon: (
@@ -44,13 +44,13 @@ const features = [
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
+          d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182"
         />
       </svg>
     ),
-    title: "Ground Truth Documents",
+    title: "GAN-Inspired QA",
     description:
-      "Three immutable docs created before any code: BRAINSTORM (approaches), HEALTH (codebase audit), and DOCS (types and contracts). All agents validate against these, not the original request.",
+      "night-qa evaluates against sprint contracts while night-fixer iterates on issues — an adversarial loop that drives quality up each cycle.",
   },
   {
     icon: (
@@ -64,53 +64,13 @@ const features = [
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5"
+          d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z"
         />
       </svg>
     ),
-    title: "JSON State + Compact Protocol",
+    title: "Worktree Isolation",
     description:
-      "State persists in NIGHT_SHIFT_STATE.json with compact field names saving 25% tokens. Inter-agent reports use XML-tagged compressed natural language with minimal overhead.",
-  },
-  {
-    icon: (
-      <svg
-        className="h-6 w-6"
-        fill="none"
-        viewBox="0 0 24 24"
-        strokeWidth={1.5}
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M12 9v3.75m0-10.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.75c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"
-        />
-      </svg>
-    ),
-    title: "3-Tier Error Escalation",
-    description:
-      "Failures escalate through haiku, sonnet, then opus models. Each retry includes Reflexion self-critique and prompt variation. Tier 2 rolls back to clean state with agent team debugging.",
-  },
-  {
-    icon: (
-      <svg
-        className="h-6 w-6"
-        fill="none"
-        viewBox="0 0 24 24"
-        strokeWidth={1.5}
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z"
-        />
-      </svg>
-    ),
-    title: "Pipelining + Cache Optimization",
-    description:
-      "Prefetches next iteration files while the current one runs. Agent prompts use stable prefix + variable suffix structure to maximize KV-cache hit rates across same-type agents.",
+      "Each agent works in its own git worktree. No merge conflicts, no stepping on each other's code. Parallel execution without interference.",
   },
   {
     icon: (
@@ -128,36 +88,71 @@ const features = [
         />
       </svg>
     ),
-    title: "Audit Wrapper with 6 Personas",
+    title: "Anti-Hallucination Protocol",
     description:
-      "A single wrapper agent runs 6 specialized reviewers: Architect, Domain Expert, Code Expert, Performance, Security, and Human Advocate. Three consecutive clean passes required before PR.",
+      "Never guess, always verify. Every agent logs uncertainties, cross-references outputs, and flags anything it cannot confirm from source.",
+  },
+  {
+    icon: (
+      <svg
+        className="h-6 w-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth={1.5}
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
+        />
+      </svg>
+    ),
+    title: "Persistent State via Ralph-Loop",
+    description:
+      "Fresh Claude context each iteration, but state persists in NIGHT_SHIFT_STATE.md. The loop reads, works, writes — never loses progress.",
+  },
+  {
+    icon: (
+      <svg
+        className="h-6 w-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth={1.5}
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+        />
+      </svg>
+    ),
+    title: "Multi-Pass Audit",
+    description:
+      "Three or more review cycles with cross-validation before any PR is opened. Code review, security review, and adversarial debugging in V3.",
   },
 ];
 
-/* ─── Mermaid chart — v5 19-step pipeline (simplified) ─── */
+/* ─── Mermaid chart ─── */
 const pipelineChart = `graph LR
-  A["Spec"] --> B["Ground Truth"]
-  B --> C["Test Specs\\n(red)"]
-  C --> D["Code\\n(green)"]
-  D --> E["Validate"]
-  E --> F["Critic"]
-  F --> G["QA"]
-  G --> H["Audit\\n6 personas\\n3 passes"]
-  H --> I["PR"]
-
-  E -->|fail| J["Escalation"]
-  J --> D
+  A["Spec"] --> B["Plan"]
+  B --> C["Code"]
+  C --> D["Test"]
+  D --> E["QA"]
+  E -->|issues| F["Fix"]
+  F --> C
+  E -->|pass| G["Audit"]
+  G --> H["PR"]
 
   style A fill:#3b82f6,stroke:#2563eb,color:#fff
   style B fill:#6366f1,stroke:#4f46e5,color:#fff
-  style C fill:#ef4444,stroke:#dc2626,color:#fff
-  style D fill:#22c55e,stroke:#16a34a,color:#fff
+  style C fill:#18181b,stroke:#3f3f46,color:#e4e4e7
+  style D fill:#18181b,stroke:#3f3f46,color:#e4e4e7
   style E fill:#18181b,stroke:#3f3f46,color:#e4e4e7
-  style F fill:#18181b,stroke:#3f3f46,color:#e4e4e7
-  style G fill:#18181b,stroke:#3f3f46,color:#e4e4e7
-  style H fill:#8b5cf6,stroke:#7c3aed,color:#fff
-  style I fill:#10b981,stroke:#059669,color:#fff
-  style J fill:#f59e0b,stroke:#d97706,color:#18181b
+  style F fill:#f59e0b,stroke:#d97706,color:#18181b
+  style G fill:#8b5cf6,stroke:#7c3aed,color:#fff
+  style H fill:#10b981,stroke:#059669,color:#fff
 `;
 
 export default function Home() {
@@ -183,13 +178,13 @@ export default function Home() {
           {"fn spawn_agent()"}
         </div>
         <div className="pointer-events-none absolute right-[12%] top-[25%] font-mono text-xs text-zinc-700/40 select-none">
-          {"state.json.persist()"}
+          {"state.persist()"}
         </div>
         <div className="pointer-events-none absolute left-[8%] bottom-[20%] font-mono text-xs text-zinc-700/40 select-none">
-          {"test_first.red_green()"}
+          {"worktree.isolate()"}
         </div>
         <div className="pointer-events-none absolute right-[15%] bottom-[30%] font-mono text-xs text-zinc-700/40 select-none">
-          {"audit.6_personas()"}
+          {"audit.verify()"}
         </div>
 
         <div className="relative mx-auto max-w-6xl px-4 pb-16 pt-20 sm:px-6 sm:pb-24 sm:pt-28">
@@ -200,7 +195,7 @@ export default function Home() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
               </span>
-              Night Shift v5 — Built on Claude Code
+              Built on Claude Code
             </div>
 
             <h1 className="mb-5 text-5xl font-bold tracking-tight text-white sm:text-6xl lg:text-7xl">
@@ -211,10 +206,9 @@ export default function Home() {
             </h1>
 
             <p className="mx-auto max-w-2xl text-lg leading-relaxed text-zinc-400 sm:text-xl">
-              Night Shift v5 is a 19-step autonomous coding system. Push a spec
-              before bed, wake up to a review-ready PR. Eight specialized agents
-              run test-first iterations with JSON state persistence, 3-tier
-              error escalation, and a 6-persona audit gate.
+              NightShift is an autonomous overnight coding system. Push a spec
+              before bed, wake up to a review-ready PR. Seven specialized agents
+              collaborate through iterative loops with multi-pass auditing.
             </p>
           </div>
 
@@ -244,12 +238,11 @@ export default function Home() {
       <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
         <div className="mb-10 text-center sm:mb-14">
           <h2 className="mb-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            The 19-Step Pipeline
+            The Pipeline
           </h2>
           <p className="mx-auto max-w-xl text-zinc-400">
-            From spec to PR in one overnight session. Ground truth documents
-            anchor every agent. Tests define convergence. Six audit personas
-            must pass three consecutive clean reviews before any PR is opened.
+            From spec to PR in one overnight session. The loop iterates until QA
+            passes, then runs multi-pass audit before opening the pull request.
           </p>
         </div>
 
@@ -257,11 +250,8 @@ export default function Home() {
 
         <div className="mt-8 text-center">
           <p className="font-mono text-sm text-zinc-600">
-            Spec &rarr; Ground Truth &rarr; Tests{" "}
-            <span className="text-red-500/60">(red)</span> &rarr; Code{" "}
-            <span className="text-emerald-500/60">(green)</span> &rarr;
-            Validate &rarr; Critic &rarr; QA &rarr; Audit (6 personas
-            &times; 3 passes) &rarr; PR
+            Spec &rarr; Plan &rarr; [Code &rarr; Test &rarr; QA &rarr; Fix]
+            &times; n &rarr; Audit &times; 3+ &rarr; PR
           </p>
         </div>
       </section>
@@ -274,9 +264,8 @@ export default function Home() {
               Engineered for Reliability
             </h2>
             <p className="mx-auto max-w-xl text-zinc-400">
-              Every component is designed to eliminate failure modes in
-              autonomous overnight execution — from test-first convergence to
-              multi-persona auditing.
+              Every component is designed to reduce failure modes in autonomous
+              overnight execution — from isolated worktrees to adversarial QA.
             </p>
           </div>
 
@@ -319,9 +308,9 @@ export default function Home() {
                 Dive Deeper
               </h2>
               <p className="mx-auto mb-8 max-w-lg text-zinc-400">
-                Understand the v5 architecture behind autonomous overnight
+                Understand the architecture behind autonomous overnight
                 development, or follow a step-by-step walkthrough of a real
-                Night Shift session.
+                NightShift session.
               </p>
 
               <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">

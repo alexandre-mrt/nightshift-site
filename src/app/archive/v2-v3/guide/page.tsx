@@ -1494,24 +1494,20 @@ wait`}</code>
 
           {/* ---------- 3. Night Shift Deep Dive ---------- */}
           <section id="jarvis-nightshift">
-            <h3 className="mb-4 text-xl font-semibold text-white">3. Night Shift v5 — Autonomous Overnight Coding</h3>
+            <h3 className="mb-4 text-xl font-semibold text-white">3. Night Shift — Autonomous Overnight Coding</h3>
             <p className="mb-4 text-zinc-400 leading-relaxed">
               The crown jewel of the Jarvis setup. Push a spec before bed, wake up to a review-ready PR.
-              v5 introduces test-first development, ground truth documents, JSON state management,
-              6 audit personas, pipelining, and doom-loop detection.
               See the <a href="/architecture" className="text-blue-400 hover:underline">Architecture</a> and <a href="/how-it-works" className="text-blue-400 hover:underline">How It Works</a> pages
-              for full details.
+              for full details. Here&apos;s the operational summary:
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
               {[
-                { title: "Test-First Flow", desc: "Tests are written before implementation (red phase). Night-tester generates specs, night-coder implements until green. Objective convergence: are the tests passing?" },
-                { title: "Ground Truth Docs", desc: "Three immutable documents created at pre-flight: BRAINSTORM (approaches), HEALTH (codebase audit), DOCS (types/interfaces). All agents validate against these." },
-                { title: "JSON State", desc: "NIGHT_SHIFT_STATE.json replaces Markdown state. Compact field names, jq-parseable, auto-trimmed to ~50 lines. ERRORS.json tracks all failures with Reflexion." },
-                { title: "Model Tiering", desc: "Each agent role has a default model (haiku/sonnet/opus). Automatic upgrade: if sonnet fails 2x on a task, retry with opus. Budget-aware downgrades at 70%." },
-                { title: "Doom-Loop Detection", desc: "Detects stuck patterns: same file edited 3x, same error 3x, diff hash oscillation (A→B→A), no progress for 5 iterations. Forces strategy change or marks BLOCKED." },
-                { title: "Pipelining", desc: "While agents run, the orchestrator pre-reads files for the next batch of tasks and pre-computes merge order. Next iteration skips exploration, goes straight to execution." },
-                { title: "6 Audit Personas", desc: "Stability gate uses Architect, Domain Expert, Code Expert, Performance Expert, Security Expert, and Human Advocate. Cross-validation between personas. 3 clean passes required." },
-                { title: "3-Tier Escalation", desc: "Tier 1: night-fixer (haiku, 3 retries with Reflexion). Tier 2: rollback + agent team debugging (opus). Tier 3: mark BLOCKED, log trajectory, move on." },
+                { title: "Launch", desc: "night-shift spec.md [project-dir] — bash script sets up ralph-loop state file and launches Claude Code" },
+                { title: "Pre-flight", desc: "Interactive questionnaire before user sleeps. Produces NIGHT_SHIFT_ENRICHED_SPEC.md with all clarifications." },
+                { title: "Loop", desc: "Ralph-loop stop hook re-feeds the prompt on each exit, giving fresh context. NIGHT_SHIFT_STATE.md is the only memory." },
+                { title: "Agents", desc: "Specialized subagents (night-coder, night-tester, night-qa, night-fixer) run in isolated git worktrees." },
+                { title: "QA", desc: "GAN-inspired: night-qa evaluates against sprint contracts, night-fixer iterates. Max 5 cycles per feature." },
+                { title: "Audit", desc: "3+ review loops with security, code quality, readability, and research reviewers cross-validating findings." },
               ].map((item) => (
                 <div key={item.title} className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
                   <div className="mb-1 font-semibold text-purple-400">{item.title}</div>
@@ -1529,10 +1525,10 @@ NIGHT_SHIFT_PROMPT="You are in Night Shift mode.
 ORIGINAL SPEC: \${SPEC_FILE}
 ENRICHED SPEC: NIGHT_SHIFT_ENRICHED_SPEC.md
 
-1. Read NIGHT_SHIFT_STATE.json
-2. IF no state: first iteration (plan + ground truth + test specs)
-3. IF state exists: continuation (next task batch)
-4. When ALL done: stability gate + functional verification + PR + <promise>"
+1. Read NIGHT_SHIFT_STATE.md
+2. IF no state: first iteration (plan + init)
+3. IF state exists: continuation (next task)
+4. When ALL done: final validation + PR + <promise>"
 
 # Create ralph-loop state file
 cat > .claude/ralph-loop.local.md <<STATE_EOF
@@ -1549,60 +1545,34 @@ STATE_EOF
 claude --dangerously-skip-permissions "$NIGHT_SHIFT_PROMPT"`}</code>
               </pre>
             </Collapsible>
-            <Collapsible title="v5 iteration flow">
-              <pre className="overflow-x-auto rounded-lg bg-zinc-950 p-4 text-xs text-zinc-300 border border-zinc-800">
-                <code>{` 1. Read STATE.json (compact — max 50 lines with trimming)
- 2. Read ERRORS.json (only unresolved + last 5 resolved)
- 3. Read LEARNINGS.md + TODO.md (attention anchors)
- 4. Read prefetch from previous iteration (if any)
- 5. init.sh if needed
- 6. git log --oneline -5
- 7. Doom-loop detection
- 8. Idle detection
- 9. Check tests exist (test-first: red before green)
-10. Spawn ALL ready tasks in parallel (worktree isolation)
-11. Pipelining: while agents run, prefetch next iteration
-12. Collect results — early abort on critical failure
-13. Merge worktrees → validate (build+test+lint with timeouts)
-14. Failures → 3-tier escalation
-15. Critic agent (post-merge, information-isolated)
-16. QA cycle (UI tasks only)
-17. Update state (auto-trim log to last 5 entries) + cost tracking
-18. WIP commit
-19. All done? → Stability Gate. Else → exit → ralph-loop re-feeds`}</code>
-              </pre>
-            </Collapsible>
           </section>
 
           {/* ---------- 4. Agent Ecosystem ---------- */}
           <section id="jarvis-agents">
             <h3 className="mb-4 text-xl font-semibold text-white">4. Agent Ecosystem</h3>
             <p className="mb-4 text-zinc-400 leading-relaxed">
-              Eight custom agents defined in <code className="rounded bg-zinc-800 px-1.5 py-0.5 text-sm font-mono text-purple-400">~/.claude/agents/</code>,
-              each with specific model tiering, tools, safety constraints, and behavioral rules.
-              v5 introduces model tiering: each agent has a default model based on task complexity,
-              with automatic upgrades on repeated failures.
+              Seven custom agents defined in <code className="rounded bg-zinc-800 px-1.5 py-0.5 text-sm font-mono text-purple-400">~/.claude/agents/</code>,
+              each with specific model, tools, and behavioral rules.
             </p>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-zinc-800 text-left text-zinc-400">
                     <th className="px-4 py-3">Agent</th>
-                    <th className="px-4 py-3">Default Model</th>
+                    <th className="px-4 py-3">Model</th>
                     <th className="px-4 py-3">Isolation</th>
                     <th className="px-4 py-3">Purpose</th>
                   </tr>
                 </thead>
                 <tbody className="text-zinc-300">
                   {[
-                    { name: "night-coder", model: "Sonnet", isolation: "worktree", purpose: "Implements features and components. Opus 4.7 for UI/design tasks." },
-                    { name: "night-tester", model: "Sonnet", isolation: "worktree", purpose: "Writes test specs before implementation (red phase). Test-first flow." },
-                    { name: "night-qa", model: "Sonnet", isolation: "none", purpose: "Functional QA via Playwright MCP. Evaluates sprint contracts." },
-                    { name: "night-fixer", model: "Haiku → Sonnet → Opus", isolation: "worktree", purpose: "3-tier escalation: starts fast (haiku), upgrades on failure." },
-                    { name: "code-reviewer", model: "Sonnet", isolation: "none", purpose: "GAN-pattern critic: sees only spec + output, never generator reasoning." },
-                    { name: "security-reviewer", model: "Sonnet", isolation: "none", purpose: "Security audit: secrets, injection, auth, OWASP top 10." },
-                    { name: "planner", model: "Opus", isolation: "none", purpose: "Architecture planning, task decomposition, ground truth documents." },
-                    { name: "skill-forge", model: "Opus", isolation: "none", purpose: "Auto-generates domain skills on-the-fly during night-shift." },
+                    { name: "night-coder", model: "Opus", isolation: "worktree", purpose: "Implements features and components. Main workhorse." },
+                    { name: "night-tester", model: "Opus", isolation: "worktree", purpose: "Writes comprehensive test suites for existing code." },
+                    { name: "night-qa", model: "Opus", isolation: "none", purpose: "Functional QA via Playwright MCP. Evaluates sprint contracts." },
+                    { name: "night-fixer", model: "Opus", isolation: "worktree", purpose: "Diagnoses and fixes build/test/lint failures. Deep analysis." },
+                    { name: "code-reviewer", model: "Opus", isolation: "none", purpose: "Reviews code quality: DRY, types, resource leaks, edge cases." },
+                    { name: "security-reviewer", model: "Opus", isolation: "none", purpose: "Security audit: secrets, injection, auth, OWASP top 10." },
+                    { name: "planner", model: "Opus", isolation: "none", purpose: "Architecture planning and task decomposition." },
                   ].map((agent) => (
                     <tr key={agent.name} className="border-b border-zinc-800/50">
                       <td className="px-4 py-3 font-mono text-sm text-purple-400">{agent.name}</td>
@@ -1618,48 +1588,12 @@ claude --dangerously-skip-permissions "$NIGHT_SHIFT_PROMPT"`}</code>
                 </tbody>
               </table>
             </div>
-            <p className="mt-3 text-sm text-zinc-500">
-              <strong className="text-zinc-400">Auto-upgrade rule:</strong> if Sonnet fails 2x on the same task, the orchestrator retries with Opus.
-              At 70%+ budget, non-critical agents downgrade to Haiku.
-              Safety tiers ensure reviewers never write and QA never edits.
-            </p>
-            <Collapsible title="Example agent spawn with model tiering (v5)">
-              <pre className="overflow-x-auto rounded-lg bg-zinc-950 p-4 text-xs text-zinc-300 border border-zinc-800">
-                <code>{`// Spawn all ready tasks in parallel with model tiering
-Agent(
-  subagent_type: "night-coder",
-  model: "sonnet",           // default for implementation
-  isolation: "worktree",
-  run_in_background: true,
-  prompt: "<task T1 + files + interfaces + lessons from ERRORS.json>"
-)
-Agent(
-  subagent_type: "night-coder",
-  model: "opus",             // UI/design tasks get opus 4.7
-  isolation: "worktree",
-  run_in_background: true,
-  prompt: "<task T2 (frontend component) + sprint contract>"
-)
-Agent(
-  subagent_type: "night-tester",
-  model: "sonnet",
-  isolation: "worktree",
-  run_in_background: true,
-  prompt: "<task T3: write test specs for upcoming feature>"
-)
-
-// Cache-optimized prompt structure:
-// 1. STABLE PREFIX — role + rules + output format (cached across agents)
-// 2. SEMI-STABLE — domain skill + ground truth (cached per project)
-// 3. VARIABLE — task + files + lessons (changes per spawn)`}</code>
-              </pre>
-            </Collapsible>
             <Collapsible title="Example agent definition: night-coder.md">
               <pre className="overflow-x-auto rounded-lg bg-zinc-950 p-4 text-xs text-zinc-300 border border-zinc-800">
                 <code>{`---
 name: night-coder
 description: Implement a single feature or component in an isolated worktree.
-model: sonnet
+model: opus
 tools: Read, Write, Edit, Grep, Glob, Bash
 ---
 
@@ -1672,19 +1606,19 @@ You are a Night Shift worker agent. You implement ONE feature or component.
 4. Search, don't guess — Grep/Glob for real signatures
 5. No hardcoded values — use constants, config, or env vars
 
-## Anti-hallucination
-- Investigate before coding. Never guess APIs/types.
-- Uncertain → log to NIGHT_SHIFT_PROBLEMS.md + // NIGHT-SHIFT-REVIEW marker
-- Blocked > Broken. Skip and log, don't hallucinate.
+## Workflow
+1. Read relevant files from your task prompt
+2. Understand interfaces, types, and patterns
+3. Implement following existing patterns
+4. Verify: run build + lint
+5. Commit: feat(night-shift): <description>
 
-## Output format
-<result task="TX" agent="night-coder" status="done|partial|blocked|failed">
-summary: one-line what was done
-files: path1.ts path2.ts
-commits: abc1234
-issues: none | brief description
-confidence: high|medium|low
-</result>`}</code>
+## Do NOT
+- Modify files outside your task scope
+- Add abstractions for one-time use
+- Install new dependencies without justification
+- Guess APIs or types (search first, log if uncertain)
+- Leave silent TODOs (log to NIGHT_SHIFT_PROBLEMS.md)`}</code>
               </pre>
             </Collapsible>
           </section>
@@ -1694,18 +1628,15 @@ confidence: high|medium|low
             <h3 className="mb-4 text-xl font-semibold text-white">5. Skills Library</h3>
             <p className="mb-4 text-zinc-400 leading-relaxed">
               26+ custom skills in <code className="rounded bg-zinc-800 px-1.5 py-0.5 text-sm font-mono text-purple-400">~/.claude/skills/</code>,
-              from autonomous workflows to domain-specific tools. In v5, the{" "}
-              <code className="rounded bg-zinc-800 px-1.5 py-0.5 text-sm font-mono text-purple-400">skill-forge</code> agent
-              can auto-generate new domain skills during night-shift sessions, stored
-              in <code className="rounded bg-zinc-800 px-1.5 py-0.5 text-sm font-mono text-zinc-400">~/.claude/skills/generated/</code>.
+              from autonomous workflows to domain-specific tools.
             </p>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {[
-                { name: "night-shift", cat: "Autonomous", desc: "v5: test-first, ground truth, JSON state, 6 personas" },
+                { name: "night-shift", cat: "Autonomous", desc: "Overnight coding with ralph-loop" },
+                { name: "night-shift-v3", cat: "Autonomous", desc: "Agent teams for audit & debug" },
                 { name: "long-run", cat: "Autonomous", desc: "Multi-day sliding window work" },
                 { name: "orchestrate", cat: "Autonomous", desc: "Multi-agent wave orchestration" },
                 { name: "swarm", cat: "Autonomous", desc: "Coordinated agent swarm in tmux" },
-                { name: "skill-forge", cat: "Autonomous", desc: "Auto-generates domain skills on-the-fly" },
                 { name: "debrief", cat: "Meta", desc: "Log session observations to changelog" },
                 { name: "meta-review", cat: "Meta", desc: "Periodic behavior pattern review" },
                 { name: "skill-reviewer", cat: "Meta", desc: "Audit and optimize all .md files" },
@@ -1729,24 +1660,6 @@ confidence: high|medium|low
                 </div>
               ))}
             </div>
-            <Collapsible title="skill-forge: auto-generated domain skills">
-              <div className="space-y-3 text-sm text-zinc-400">
-                <p>
-                  During night-shift planning (step 1b), the orchestrator checks the existing
-                  skill registry at <code className="font-mono text-zinc-300">~/.claude/skills/generated/REGISTRY.md</code>.
-                  If the project uses a technology not covered by existing skills, it spawns{" "}
-                  <code className="font-mono text-purple-400">skill-forge</code> (model: opus) to research
-                  the domain and create a reusable skill file.
-                </p>
-                <p>
-                  Generated skills are stored
-                  in <code className="font-mono text-zinc-300">~/.claude/skills/generated/&lt;domain&gt;/skill.md</code> and
-                  injected into all agent prompts via a <code className="font-mono text-zinc-300">## Domain reference</code> section.
-                  This means night-coder agents working with an unfamiliar framework get up-to-date
-                  API patterns without burning context on exploration.
-                </p>
-              </div>
-            </Collapsible>
           </section>
 
           {/* ---------- 6. Morning Briefing ---------- */}

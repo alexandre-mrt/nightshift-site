@@ -11,6 +11,7 @@ const links = [
   { href: "/research", label: "Research" },
   { href: "/guide", label: "Claude Code Guide" },
   { href: "/under-the-hood", label: "Under the Hood" },
+  { href: "/archive/v2-v3", label: "Archive (v2/v3)" },
 ];
 
 export default function Nav() {
